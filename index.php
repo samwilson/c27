@@ -1,5 +1,5 @@
 <?php
-/* $id$ */
+/* $Id$ */
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
@@ -87,7 +87,7 @@ if ($Page['auth_level'] != '0') { // if not a public page.
 //--------Include a file for $body if neccessary ------------//
 //----------------------------------------------------------------------------//
 if ($Page['include_file']) {
-	$include_file = "includes/".$Page['include_file'];
+	$include_file = "modules/".$Page['include_file'];
 	if (file_exists($include_file)) {
 		require_once($include_file);
 	} else {
