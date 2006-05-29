@@ -1,11 +1,11 @@
 <?php
 /* $Id$ */
 
-$Config['sitename'] = "The Silly Room.";
-$Config['dbuser']   = "root";
+$Config['sitename'] = "Channel 27";
+$Config['dbuser']   = "";
 $Config['dbpass']   = "";
 $Config['dbhost']   = "localhost";
-$Config['dbname']   = "thearchiveroom";
+$Config['dbname']   = "channel27";
 
 //----------------------------------------//
 //  Don't edit anything below here.       //
