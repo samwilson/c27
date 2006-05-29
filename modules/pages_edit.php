@@ -85,14 +85,25 @@ if ($_POST['update']) {
 			$row['level']." - ".$row['name']."</option>\n";
 	}
 	$team_select_element .= "</select>\n";
-//********************************************************//
-//********************************************************//
+//----------------------------------------------------------------------------//
+//                          Modules <select>.                                 //
+//----------------------------------------------------------------------------//
 	//Get include files, and build <select>
 	$inc_files = array(0=>"");
 	if ($handle = opendir('modules/')) {
 		while (false !== ($file = readdir($handle))) {
-			if ($file != "." && $file != ".." AND $file!="rte") {
+			if (substr($file,0,1) != '.') {
 				$inc_files[] = $file;
+				if (is_dir('modules/'.$file)) {
+					if ($handle2 = opendir('modules/'.$file)) {
+						while (false !== ($file2 = readdir($handle2))) {
+							if (substr($file2,0,1) != '.') {
+								$inc_files[] = $file.'/'.$file2;
+							}
+						}
+						closedir($handle2);
+					}
+				}
 			}
 		}
 		closedir($handle);
@@ -108,8 +119,10 @@ if ($_POST['update']) {
 		$inc_select_element .= "<option value='$file' $selected>$file</option>\n";
 	}
 	$inc_select_element .= "</select>\n";
-//********************************************************//
-//********************************************************//
+
+//----------------------------------------------------------------------------//
+//                        Parent page <select>.                               //
+//----------------------------------------------------------------------------//
 //Get parent page information, and build <select>
 	$sql = "SELECT id FROM pages";
 	$result = mysql_query($sql);
