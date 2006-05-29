@@ -49,8 +49,7 @@ if (mysql_num_rows($result) == 0) {
 }
 
 //----------------------------------------------------------------------------//
-//-------- check that the current user can view this page -------//
-// 0 is public, 1 admin, 2 toplevel edit, 3 a bit lower, etc..... //
+//-------------- check that the current user can view this page --------------//
 //----------------------------------------------------------------------------//
 if ($_SESSION['username'] && $_SESSION['password']) {
 	$sql = ("SELECT * FROM users, groups 
