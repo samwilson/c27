@@ -1,4 +1,5 @@
 <?php
+/* $Id$ */
 
 if ($_POST['is_published'] == "on") $is_published = 1;
 else $is_published = 0;
@@ -7,7 +8,8 @@ $body = $_POST['body'];
 
 if ($_POST['update']) {
 	$sql = ("UPDATE pages SET
-		date_published = '".esc($_POST['date'])."',
+		date_modified = NOW(),
+		last_modified_by = ".$User['id'].",
 		parent_id = '".esc($_POST['parent_id'])."',
 		auth_level = '".esc($_POST['auth_level'])."',
 		title = '".esc($_POST['title'])."',
@@ -16,15 +18,20 @@ if ($_POST['update']) {
 		summary = '".esc($_POST['summary'])."',
 		body = '".esc($body)."',
 		is_published = ".esc($is_published)."
-		WHERE id = '".esc($_POST['edit_id'])."'");
-	$result = mysql_query($sql);
-	$Page['body'] .= ("<p>Page updated.<br>Return to
-		<a href='index.php?id=".$_POST['edit_id']."'>".$_POST['title']."</a>
-		(ID: ".$_POST['edit_id'].")</p>");
+		WHERE id = '".esc($_GET['edit_id'])."'");
+	if (!$result = mysql_query($sql)) {
+		$Page['error_message'] .= "<p>".mysql_error()."</p><pre>$sql</pre>";
+	} else {
+		$Page['body'] .= ("<p>Page updated.<br>Return to
+			<a href='index.php?id=".$_GET['edit_id']."'>".$_POST['title']."</a>
+			(ID: ".$_GET['edit_id'].")</p>");
+	}
 
 } else if ($_POST['insert']) {
 	$sql = ("INSERT pages SET
-		date_published = '".esc($_POST['date'])."',
+		date_created = NOW(),
+		author = ".$User['id'].",
+		last_modified_by = ".$User['id'].",
 		parent_id = '".esc($_POST['parent_id'])."',
 		auth_level = '".esc($_POST['auth_level'])."',
 		title = '".esc($_POST['title'])."',
@@ -69,7 +76,7 @@ if ($_POST['update']) {
 	$team_select_element = ("<select id='auth_level' name='auth_level'>\n");
 	for ($team=0; $team<$num_teams; $team++) {
 		$row = mysql_fetch_assoc($result);
-		if ($row['level'] == $Page['auth_level']) {
+		if ($row['level'] == $EditPage['auth_level']) {
 			$selected = 'selected';
 		} else {
 			$selected = '';
@@ -82,7 +89,7 @@ if ($_POST['update']) {
 //********************************************************//
 	//Get include files, and build <select>
 	$inc_files = array(0=>"");
-	if ($handle = opendir('includes/')) {
+	if ($handle = opendir('modules/')) {
 		while (false !== ($file = readdir($handle))) {
 			if ($file != "." && $file != ".." AND $file!="rte") {
 				$inc_files[] = $file;
@@ -133,14 +140,14 @@ if ($_POST['update']) {
 	$Page['style'] .= "TEXTAREA {width:100%}";
 	
 	$Page['body'] .= ("
-<form action='?id=8&edit_page=".$EditPage["id"]."' method='post'>
-<input type=\"hidden\" value=\"8\" name=\"id\">
-<input type=\"hidden\" value=\"".$EditPage["id"]."\" name=\"edit_id\">
-<a name='view'>&nbsp;</a>
-<span style='color: red'>You are editing page ".$EditPage["id"]."</span>
-Date (yyyy-mm-dd):<input type=\"text\" name=\"date\" id=\"date\" size=\"10\" value=\"".$EditPage["date_published"]."\">
+<form action='?id=".$Page['id']."&edit_id=".$EditPage["id"]."' method='post'>
+<a name='view'></a>");
+	if (isset($EditPage['id'])) {
+  		$Page['body'] .= "<span style='color: red'>You are editing page ".$EditPage["id"]."</span>";
+	}
+	$Page['body'] .= ("
 Parent Page: $parent_select_element
-Authorisation Level:$team_select_element <span style='font-size:smaller'></span>
+Authorisation Level:$team_select_element <span style='font-size:smaller'></span><br />
 Title: <input type=\"text\" name=\"title\" size=\"40\" value=\"".$EditPage["title"]."\">
 Include File: $inc_select_element<br>
 Style: <textarea name=\"style\" rows=\"6\">".$EditPage["style"]."</textarea>

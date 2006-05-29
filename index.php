@@ -55,11 +55,11 @@ if (mysql_num_rows($result) == 0) {
 if ($_SESSION['username'] && $_SESSION['password']) {
 	$sql = ("SELECT * FROM users, groups 
 		WHERE users.username = '".esc($_SESSION['username'])."'
-		AND users.password = '".esc($_SESSION['password'])."'
+		AND users.password = MD5('".esc($_SESSION['password'])."')
 		AND groups.level = users.level LIMIT 1");
-	$result = mysql_query($sql);
-	if (mysql_error())
+	if (!$result = mysql_query($sql)) {
 		$Page['error_message'] .= "<p>".mysql_error()."</p><pre>$sql</pre>";
+	}
 	if (mysql_num_rows($result) > 0) {
 		$User = mysql_fetch_assoc($result);
 		$User['logged_in'] = true;

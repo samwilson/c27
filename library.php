@@ -1,4 +1,5 @@
 <?php
+/* $Id$ */
 
 /**
  * Build variaous sorts of 'breadcrumb' navigation trails from a given node in

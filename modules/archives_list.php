@@ -1,4 +1,5 @@
 <?php
+/* $Id$ */
 
 $result = mysql_query("SELECT * FROM archives");
 if (mysql_num_rows($result)>0) {

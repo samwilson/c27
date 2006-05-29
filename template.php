@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.0//EN"
+﻿<!-- $Id$ -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.0//EN"
   "http://www.w3.org/TR/xhtml-basic/xhtml-basic10.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
@@ -51,10 +52,19 @@
   
   <div id="footer">
     <ol>
+    
+      <?php if ($User['logged_in']): ?>
+      <li><a href="?id=9">[My Account]</a></li>
+      <?php endif; ?>
+            
+      <?php if ($User['level'] == 10): ?>
       <li><a href="?id=5#view">[New page]</a></li>
       <li><a href="?id=5&edit_id=<?php echo $Page['id']; ?>#view">[Edit this page]</a></li>
+      <?php endif; ?>
+      
       <li>Powered by <a href='http://sourceforge.net/projects/channel27'>Channel 27</a></li>
       <li>Valid HTML &amp; CSS</li>
+      
     </ol>
   </div>
 

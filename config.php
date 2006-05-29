@@ -1,4 +1,6 @@
 <?php
+/* $Id$ */
+
 $Config['sitename'] = "The Silly Room.";
 $Config['dbuser']   = "root";
 $Config['dbpass']   = "";

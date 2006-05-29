@@ -1,4 +1,5 @@
 <?php
+/* $Id$ */
 
 //----------------------------------------------------------------------------//
 //                              Add a user.                                  //
@@ -118,7 +119,7 @@ if (mysql_num_rows($result)>0) {
 			"        <td>".$row['first_name']." ".$row['surname']."</td>\n".
 			"        <td><a href='mailto:".$row['email']."'>".$row['email']."</a></td>\n".
 			"        <td>".$groups[$row['level']]."</td>\n".
-			"        <td><a href='?id=14&user_id=".$row['id']."'>[Edit]</a></td>\n".
+			"        <td><a href='?id=8&user_id=".$row['id']."'>[Edit]</a></td>\n".
 			"      </tr>\n";
 	}
 	$Page['body'] .= "    </table>\n\n";

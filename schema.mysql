@@ -1,5 +1,6 @@
 /* MySQL schema for Channel 27 CMS http://sourceforge.net/projects/channel27  */
 /* Copyright Sam Wilson 2006 */
+/* $Id$ */
 /* ...GPL info goes here...*/
 
 /* To un-install Channel 27, you need only drop these three tables. */
@@ -40,8 +41,8 @@ CREATE TABLE IF NOT EXISTS pages (
   id int(11) NOT NULL auto_increment,
   parent_id int(11) NOT NULL default '0',
   auth_level int(3) NOT NULL default '0',
-  date_created date NOT NULL default '0000-00-00',
-  date_modified date NOT NULL default '0000-00-00',
+  date_created datetime NOT NULL default '0000-00-00',
+  date_modified datetime NOT NULL default '0000-00-00',
   last_modified_by int(11) NOT NULL default '0',
   author int(11) NULL,
   title tinytext NOT NULL,
@@ -74,12 +75,13 @@ INSERT INTO groups SET level=9, name='Group Nine';
 INSERT INTO groups SET level=10, name='Superusers';
 
 /* users */
-INSERT INTO users SET id=1, username='admin', password=MD5('admin'), level=10, status='active';
+INSERT INTO users SET id=1, username='admin', password=MD5('admin'), level=10,
+	status='active', first_name='A', surname='User', email='uid@domain.tld';
 
 /* pages */
 INSERT INTO pages SET id=1, date_created=NOW(), date_modified=NOW(),
 	last_modified_by=1, author=1, title='Home', is_published=1,
-	body='<p>Welcome to Channel 27!  The only CMS with a hologram developer!  For information about this software, please see <a href=\'http://sourceforge.net/\'>our Sourceforge page</a>.</p>';
+	body='<p>Welcome to Channel 27!  The only CMS with a hologram developer!  For information about this software, please see <a href=\'http://sourceforge.net/projects/channel27\'>our Sourceforge page</a>.</p>';
 INSERT INTO pages SET id=2, date_created=NOW(), date_modified=NOW(), auth_level=10,
 	last_modified_by=1, author=1, title='Site Administration', is_published=1,
 	parent_id=1;
@@ -101,3 +103,7 @@ INSERT INTO pages SET id=7, date_created=NOW(), date_modified=NOW(), auth_level=
 INSERT INTO pages SET id=8, date_created=NOW(), date_modified=NOW(), auth_level=10,
 	last_modified_by=1, author=1, title='Edit a user', is_published=1, include_file='admin_user.php',
 	parent_id=7;
+INSERT INTO pages SET id=9, date_created=NOW(), date_modified=NOW(), auth_level=1,
+	last_modified_by=1, author=1, title='My Account', is_published=1,
+	include_file='admin_myaccount.php',
+	parent_id=1;
