@@ -35,7 +35,7 @@
     <?php if ($Page['id']!='1') echo "<h2>".$Page['title']."</h2>"; ?>
     
     <?php if ($Page['error_message'])
-    	print("<div class='error_message'><p><strong>Error!</strong></p>".
+    	print("<div class='error_message'><p><strong>Error:</strong></p>".
     		  $Page['error_message']."</div>"); ?>
     <?php if ($Page['message'])
     	echo "<div class='message'>".$Page['message']."</div>"; ?>

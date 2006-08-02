@@ -7,10 +7,7 @@
 DROP TABLE IF EXISTS pages;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS groups;
-DROP TABLE IF EXISTS events_to_individuals;
-DROP TABLE IF EXISTS events;
-DROP TABLE IF EXISTS individuals;
-DROP TABLE IF EXISTS archives;
+DROP TABLE IF EXISTS relationships;
 
 /* ---- CREATE TABLES ---- */
 /* Tables created in this order to satisfy foreign key requirements. */
@@ -55,8 +52,17 @@ CREATE TABLE IF NOT EXISTS pages (
   FOREIGN KEY author(author) REFERENCES users(id),
   FOREIGN KEY last_modified_by(last_modified_by) REFERENCES users(id),
   FOREIGN KEY parent_id(parent_id) REFERENCES pages(id),
-  FOREIGN KEY auth_level(auth_level) REFERENCES groups(level)
-    
+  FOREIGN KEY auth_level(auth_level) REFERENCES groups(level)  
+);
+
+CREATE TABLE IF NOT EXISTS relationships (
+  page_1_id int(11) NOT NULL default 0,  
+  page_2_id int(11) NOT NULL default 0,
+  tagline tinytext NOT NULL,
+  description mediumtext NULL,
+  /*PRIMARY KEY (page_1_id, page_2_id),*/
+  FOREIGN KEY page_1_id(page_1_id) REFERENCES pages(id),
+  FOREIGN KEY page_2_id(page_2_id) REFERENCES pages(id)
 );
 
 /* ---- POPULATE TABLES ---- */
@@ -86,24 +92,28 @@ INSERT INTO pages SET id=2, date_created=NOW(), date_modified=NOW(), auth_level=
 	last_modified_by=1, author=1, title='Site Administration', is_published=1,
 	parent_id=1;
 INSERT INTO pages SET id=3, date_created=NOW(), date_modified=NOW(),
-	last_modified_by=1, author=1, title='Login', is_published=1, include_file='login.php',
+	last_modified_by=1, author=1, title='Login', is_published=1, include_file='system/login.php',
 	parent_id=1;
 INSERT INTO pages SET id=4, date_created=NOW(), date_modified=NOW(),
-	last_modified_by=1, author=1, title='Logout', is_published=1, include_file='logout.php',
+	last_modified_by=1, author=1, title='Logout', is_published=1, include_file='system/logout.php',
 	parent_id=1, auth_level=1;
 INSERT INTO pages SET id=5, date_created=NOW(), date_modified=NOW(), auth_level=10,
-	last_modified_by=1, author=1, title='Edit a page', is_published=1, include_file='pages_edit.php',
+	last_modified_by=1, author=1, title='Edit a page', is_published=1, include_file='system/edit_page.php',
 	parent_id=2;
 INSERT INTO pages SET id=6, date_created=NOW(), date_modified=NOW(), auth_level=10,
-	last_modified_by=1, author=1, title='Administer Groups', is_published=1, include_file='admin_groups.php',
+	last_modified_by=1, author=1, title='Administer Groups', is_published=1, include_file='system/admin_groups.php',
 	parent_id=2;
 INSERT INTO pages SET id=7, date_created=NOW(), date_modified=NOW(), auth_level=10,
-	last_modified_by=1, author=1, title='Administer Users', is_published=1, include_file='admin_users.php',
+	last_modified_by=1, author=1, title='Administer Users', is_published=1, include_file='system/admin_users.php',
 	parent_id=2;
 INSERT INTO pages SET id=8, date_created=NOW(), date_modified=NOW(), auth_level=10,
-	last_modified_by=1, author=1, title='Edit a user', is_published=1, include_file='admin_user.php',
+	last_modified_by=1, author=1, title='Edit a user', is_published=1, include_file='system/admin_user.php',
 	parent_id=7;
 INSERT INTO pages SET id=9, date_created=NOW(), date_modified=NOW(), auth_level=1,
 	last_modified_by=1, author=1, title='My Account', is_published=1,
-	include_file='admin_myaccount.php',
+	include_file='system/myaccount.php',
 	parent_id=1;
+INSERT INTO pages SET id=10, date_created=NOW(), date_modified=NOW(), auth_level=1,
+	last_modified_by=1, author=1, title='Edit relationships', is_published=1,
+	include_file='system/edit_relationships.php',
+	parent_id=5;

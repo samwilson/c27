@@ -1,11 +1,12 @@
 <?php
 /* $Id$ */
 
-$Config['sitename'] = "Channel 27";
-$Config['dbuser']   = "";
-$Config['dbpass']   = "";
-$Config['dbhost']   = "localhost";
-$Config['dbname']   = "channel27";
+$Config['sitename']     = "Channel 27";
+$Config['dbuser']       = "root";
+$Config['dbpass']       = "";
+$Config['dbhost']       = "localhost";
+$Config['dbname']       = "thearchiveroom";
+$Config['table_prefix'] = "ar_";
 
 //----------------------------------------//
 //  Don't edit anything below here.       //
