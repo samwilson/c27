@@ -124,7 +124,7 @@ if ($_GET['user_id'] && $_GET['action'] != 'delete-ok') {
 			"      <p class='submit'>\n".
 			"        <input type='submit' name='edit_user' value='Save' />\n".
 			"        <input type='submit' name='delete_user' value='Delete this user' />\n".
-			"        <a href='?id=13'>[Return to user list]</a>\n".
+			"        <a href='?id=7'>[Return to user list]</a>\n".
 			"      </p>\n".
 			"    </form>\n\n"
 		);
