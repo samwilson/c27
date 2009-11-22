@@ -2,22 +2,24 @@
 
 require_once 'common.php';
 
-$page->setTitle('Upgrade');
-$page->setBody('<div class="container centre">
-<div class="span-24 last"><h1>Upgrade</h1></div>');
 
 
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS auth_levels (
   	id int(3) NOT NULL PRIMARY KEY,
   	name varchar(50) NOT NULL
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
+if ($db->fetchRow("SELECT 1 FROM auth_levels WHERE id=0")==null) {
+	$db->query("INSERT INTO auth_levels SET id=0, name='Open'");
 }
-
-$result = $mdb2->exec("
+if ($db->fetchRow("SELECT 1 FROM auth_levels WHERE id=5")==null) {
+	$db->query("INSERT INTO auth_levels SET id=5, name='Restricted'");
+}
+if ($db->fetchRow("SELECT 1 FROM auth_levels WHERE id=10")==null) {
+	$db->query("INSERT INTO auth_levels SET id=10, name='Private'");
+}
+$db->query("
 CREATE TABLE IF NOT EXISTS people (
   id int(11) NOT NULL auto_increment PRIMARY KEY,
   name varchar(150) NOT NULL,
@@ -29,11 +31,7 @@ CREATE TABLE IF NOT EXISTS people (
   CONSTRAINT people_auth_level FOREIGN KEY (auth_level) REFERENCES auth_levels (id)
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS emails (
   id int(10) NOT NULL auto_increment PRIMARY KEY,
   to_id int(11) NOT NULL,
@@ -45,12 +43,7 @@ CREATE TABLE IF NOT EXISTS emails (
   CONSTRAINT emails_from_id FOREIGN KEY (from_id) REFERENCES people (id)
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS images (
   id int(15) NOT NULL auto_increment PRIMARY KEY,
   date_and_time datetime NOT NULL,
@@ -59,12 +52,7 @@ CREATE TABLE IF NOT EXISTS images (
   CONSTRAINT images_auth_level FOREIGN KEY (auth_level) REFERENCES auth_levels (id)
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS journal_entries (
   id int(11) NOT NULL auto_increment PRIMARY KEY,
   date_and_time datetime NOT NULL,
@@ -74,23 +62,13 @@ CREATE TABLE IF NOT EXISTS journal_entries (
   CONSTRAINT journal_entries_auth_level FOREIGN KEY (auth_level) REFERENCES auth_levels (id)
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS tags (
   id int(15) NOT NULL auto_increment PRIMARY KEY,
   title varchar(200) NOT NULL UNIQUE
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS tags_to_images (
   tag int(15) NOT NULL,
   image int(15) NOT NULL,
@@ -99,12 +77,7 @@ CREATE TABLE IF NOT EXISTS tags_to_images (
   CONSTRAINT tags_to_images_image FOREIGN KEY (image) REFERENCES images (id)
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS tags_to_journal_entries (
   tag int(15) NOT NULL,
   journal_entry int(15) NOT NULL,
@@ -114,12 +87,7 @@ CREATE TABLE IF NOT EXISTS tags_to_journal_entries (
     FOREIGN KEY (journal_entry) REFERENCES journal_entries (id)
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
-}
-
-
-$result = $mdb2->exec("
+$db->query("
 CREATE TABLE IF NOT EXISTS users (
   id int(11) NOT NULL auto_increment PRIMARY KEY,
   username varchar(60) NOT NULL,
@@ -129,13 +97,20 @@ CREATE TABLE IF NOT EXISTS users (
   reset_hash varchar(100) NOT NULL
 ) ENGINE=InnoDB;
 ");
-if (PEAR::isError($result)) {
-	$page->addBodyContent("<p class='error'>".$result->getMessage()."</p>");
+if ($db->fetchRow("SELECT 1 FROM users WHERE id=1")==null) {
+	$db->query("INSERT INTO users SET id=1, username='admin', password=MD5('admin'), auth_level=10");
 }
 
-
-$page->addBodyContent('<p>
-<a class="positive button" href="index.php">All done!  Click here to continue.</a>
-</p>
+$page->setTitle('Upgrade');
+$page->setBody('
+<div class="container">
+	<div class="span-4 prepend-10 append-10 centre">
+		<h1 class="centre prepend-top">Upgrade</h1>
+		<p>
+			<a class="positive button" href="index.php">
+				All done!  Click here to continue.
+			</a>
+		</p>
+	</div>
 </div><!-- end div.container -->');
 $page->display();

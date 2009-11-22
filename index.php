@@ -24,10 +24,10 @@ $current_month = (isset($_GET['month'])) ? $_GET['month'] : date('m');
 // Years
 $page->addBodyContent("<ul class='tabs'>");
 $years = array('0'=>'(Unknown)');
-foreach ($mdb2->queryAll("SELECT YEAR(date_and_time) AS year FROM images GROUP BY YEAR(date_and_time)") as $year) {
+foreach ($db->fetchAll("SELECT YEAR(date_and_time) AS year FROM images GROUP BY YEAR(date_and_time)") as $year) {
 	$years[$year['year']] = $year['year'];
 }
-foreach ($mdb2->queryAll("SELECT YEAR(date_and_time) AS year FROM journal_entries GROUP BY YEAR(date_and_time)") as $year) {
+foreach ($db->fetchAll("SELECT YEAR(date_and_time) AS year FROM journal_entries GROUP BY YEAR(date_and_time)") as $year) {
 	$years[$year['year']] = $year['year'];
 }
 $years = array_unique($years);
@@ -42,8 +42,8 @@ $page->addBodyContent(" </ul>");
 $page->addBodyContent("<ul class='tabs'>");
 $all_months = array('00'=>'(Unknown)', '01'=>'Jan.','02'=>'Feb.','03'=>'March','04'=>'April','05'=>'May','06'=>'June','07'=>'July','08'=>'Aug.','09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Dec.');
 foreach ($all_months as $m_num=>$m_name) {
-	$img_count = $mdb2->queryOne("SELECT COUNT(*) FROM images WHERE YEAR(date_and_time)=".$mdb2->escape($current_year)." AND MONTH(date_and_time)=".$mdb2->escape($m_num)."");
-	$txt_count = $mdb2->queryOne("SELECT COUNT(*) FROM journal_entries WHERE YEAR(date_and_time)=".$mdb2->escape($current_year)." AND MONTH(date_and_time)=".$mdb2->escape($m_num)."");
+	$img_count = $db->fetchOne("SELECT COUNT(*) FROM images WHERE YEAR(date_and_time)=".$db->esc($current_year)." AND MONTH(date_and_time)=".$db->esc($m_num)."");
+	$txt_count = $db->fetchOne("SELECT COUNT(*) FROM journal_entries WHERE YEAR(date_and_time)=".$db->esc($current_year)." AND MONTH(date_and_time)=".$db->esc($m_num)."");
 	$page->addBodyContent("<li>");
 	if ($m_num == $current_month) {
 		$page->addBodyContent("<a class='selected' href='/$current_year-$m_num' title='$img_count images, $txt_count journal entries.'>$m_name (".($img_count+$txt_count)." posts)</a>");
@@ -72,11 +72,11 @@ $x=1;
 $entries = array();
 
 // Get journal entries:
-$sql = "SELECT * FROM journal_entries WHERE YEAR(date_and_time)=".$mdb2->escape($current_year)." 
-	AND MONTH(date_and_time)=".$mdb2->escape($current_month)." ORDER BY date_and_time ASC";
-$res = mysql_query($sql);
-
-while ($e = mysql_fetch_assoc($res)) {
+$sql = "SELECT * FROM journal_entries WHERE YEAR(date_and_time)=".$db->esc($current_year)." 
+	AND MONTH(date_and_time)=".$db->esc($current_month)." ORDER BY date_and_time ASC";
+//$res = mysql_query($sql);
+//while ($e = mysql_fetch_assoc($res)) {
+foreach ($db->fetchAll($sql) as $e) {
 	if ( $e['auth_level']==0 || $e['auth_level']<=$auth->getAuthData('auth_level') ) {
 		$entry['body'] = "<div class='entry_text'>".wikiformat($e['entry_text'])."</div>";
 	} else {
@@ -97,9 +97,11 @@ while ($e = mysql_fetch_assoc($res)) {
 }
 	
 // Get images:
-$res = mysql_query("SELECT * FROM images WHERE YEAR(date_and_time)=".$mdb2->escape($current_year)." 
-	AND MONTH(date_and_time)=".$mdb2->escape($current_month)." ORDER BY date_and_time ASC");
-while ($image = mysql_fetch_assoc($res)) {
+$sql = "SELECT * FROM images WHERE YEAR(date_and_time)=".$db->esc($current_year)." 
+	AND MONTH(date_and_time)=".$db->esc($current_month)." ORDER BY date_and_time ASC";
+//$res = mysql_query();
+//while ($image = mysql_fetch_assoc($res)) {
+foreach ($db->fetchAll($sql) as $image) {
 	$entry = array(
 		'class' => 'centre',
 		'date_and_time' => $image['date_and_time'],
@@ -129,26 +131,32 @@ while ($image = mysql_fetch_assoc($res)) {
 
 
 // Put it all together.
-$page->addBodyContent("<div class='span-18 blog-entries showgrid'>"); 
 ksort($entries);
+$page->addBodyContent("<div class='span-18'>");
+if (count($entries) < 1) {
+	$page->addBodyContent("<p class='notice'>No journal entries nor images were found.</p>");
+}
 $day = '';
 foreach ($entries as $key=>$entry) {
-	$new_day = date('l, F j<\s\u\p>S</\s\u\p> Y',strtotime($entry['date_and_time']));
+	/*$new_day = date('l, F j<\s\u\p>S</\s\u\p> Y',strtotime($entry['date_and_time']));
 	if ($day!=$new_day) {
-		if ($day!='') $page->addBodyContent("</div><!-- end .day -->"); // If we're already in a day, i.e. not at the begining of the month. 
+		if (!empty($day)) {
+			$page->addBodyContent("\t</div><!-- end .day -->\n\t<div class='day'>"); // If we're already in a day, i.e. not at the begining of the month. 
+		}
 		$day = $new_day;
-		$page->addBodyContent("<div class='day'><h2>$day</h2>");
+		$page->addBodyContent("<h2>$day</h2>");
 	}
+	*/
 	$page->addBodyContent("
 	<div class='entry {$entry['class']}'>
-		<h3 class='inline title'>{$entry['title']}</h3>
+		<h3 class=''>{$entry['title']}</h3>
 		{$entry['body']}
 		<p class='small quiet'>{$entry['metadata']} [{$entry['auth_level']}]</p>
 		<hr />
 	</div>
 	");
 }
-$page->addBodyContent("</div><!-- end .day -->"); 
+//$page->addBodyContent("</div><!-- end .day -->"); 
 $page->addBodyContent("</div><!-- end .blog-entries -->"); 
 
 
@@ -161,12 +169,12 @@ $page->addBodyContent("</div><!-- end .blog-entries -->");
 
 
 // Get a random image.
-$or_where = ($auth->checkAuth()) ? "OR auth_level<=".$mdb2->escape($auth->getAuthData('auth_level')) : "";
-$image = $mdb2->queryRow("SELECT * FROM images WHERE auth_level=0 $or_where ORDER BY RAND() LIMIT 1");
+$or_where = ($auth->checkAuth()) ? "OR auth_level<=".$db->esc($auth->getAuthData('auth_level')) : "";
+$image = $db->fetchRow("SELECT * FROM images WHERE auth_level=0 $or_where ORDER BY RAND() LIMIT 1");
 $page->addBodyContent("
 <div class='span-6 last'>
-	<div class='box'>
-		<h3>A Random Image:</h3>
+	<div class='box centre'>
+		<h3>One Random Image</h3>
 		<p>
 			<a href='/images/{$image['id']}'>
 				<img 	src='/images/{$image['id']}/view' 
@@ -203,7 +211,7 @@ $page->addBodyContent("
 			<a href='http://pear.php.net'>PEAR</a> contributors;
 			<a href='http://kingdesk.com/projects/php-typography/'>KINGdesk's PHP Typography</a>.
 		</li>
-		<li><a href='/admin'>Site Administration</a></li>
+		<li><a href='" . WEBROOT . "/admin'>Site Administration</a></li>
 	</ul>
 </div>");
 

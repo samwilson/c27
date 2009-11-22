@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once 'common.php';
 require_once 'HTML/QuickForm.php';
 require_once 'HTML/QuickForm/link.php';
 require_once 'HTML/QuickForm/select.php';
@@ -16,15 +16,18 @@ $page->setTitle("G.P.O. Inbox");
 
 require_once 'Net/IMAP.php';
 $imap = new Net_IMAP($mail_server['server'], $mail_server['port']);
-if (PEAR::isError($imap->login($mail_server['username'], $mail_server['password'], true, false))) {
-	die('Could not login to mail server.');
+$login = $imap->login($mail_server['username'], $mail_server['password'], true, false);
+if (PEAR::isError($login)) {
+	$page->addBodyContent('<p class="error">Unable to connect to mail server.</p>');
 }
-$imap->selectMailbox($mail_server['inbox']);
+$mboxSelect = $imap->selectMailbox($mail_server['inbox']);
+if (PEAR::isError($mboxSelect)) {
+	$page->addBodyContent("<p class='error'>Unable to select mailbox '" . $mboxSelect->getMessage() . "'.</p>");
+}
 
 
 /*******************************************************************************
- * Archive selected email
- * (Saving to the database is handled in lib/Database.php)
+ * Archive email
  ******************************************************************************/
 
 if ( (isset($_POST['save']) && $_POST['save']=='Archive + Delete') || isset($_POST['delete']) ) {
@@ -52,7 +55,11 @@ foreach ($ppl as $person) {
 /*******************************************************************************
  * Display currently selected message
  ******************************************************************************/
-if ($imap->numMsg()>0) {
+$msgCount = $imap->numMsg();
+if (PEAR::isError($msgCount)) {
+	$page->addBodyContent("<p class='error'>No messages found.  '" . $msgCount->getMessage() . "'.</p>");
+}
+elseif ($msgCount > 0) {
 	
 	// Get message headers.
 	$headers = $imap->getSummary(1);

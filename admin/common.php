@@ -1,14 +1,10 @@
 <?php
 require_once '../common.php';
-error_reporting(E_ALL);
 
 
 if ( $auth->getAuthData('auth_level') < 10 ) {
 	show_login_form();
 }
-
-require_once 'lib/Database.php';
-$db = new Database($dsn);
 
 
 // Main menu

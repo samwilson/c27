@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include 'common.php';
 include 'HTML/QuickForm.php';
 include 'HTML/QuickForm/text.php';
 include 'HTML/QuickForm/textarea.php';

@@ -8,6 +8,9 @@ class Database {
 	function Database($dsn) {
 
 		$this->mdb2 = MDB2::connect($dsn);
+		if ($this->mdb2 instanceof MDB2_Error) {
+			error($this->mdb2);
+		}
 		$this->mdb2->setFetchMode(MDB2_FETCHMODE_ASSOC);
 		
 		/*
@@ -87,11 +90,7 @@ class Database {
 	function query($sql) {
 		$res = $this->mdb2->query($sql);
 		if (PEAR::isError($res)) {
-			$page = new HTML_Page2();
-			$page->setTitle($res->message);
-			$page->addBodyContent("<h1>$res->message</h1><pre>$res->userinfo</pre>");
-			$page->display();
-			die();
+			error($res);
 		} else {
 			return $res;
 		}
@@ -254,6 +253,18 @@ class Database {
 	function fetchAll($sql) {
 		$r = $this->query($sql);
 		$results = $r->fetchAll();
+		return $results;
+	}
+
+	function fetchRow($sql) {
+		$r = $this->query($sql);
+		$results = $r->fetchRow();
+		return $results;
+	}
+
+	function fetchOne($sql) {
+		$r = $this->query($sql);
+		$results = $r->fetchOne();
 		return $results;
 	}
 	

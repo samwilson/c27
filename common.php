@@ -2,12 +2,8 @@
 require_once 'config.php';
 
 
-require_once 'MDB2.php';
-$mdb2 = MDB2::connect($dsn);
-if ($mdb2 instanceof MDB2_Error) {
-	die($mdb2->getMessage());
-}
-$mdb2->setFetchMode(MDB2_FETCHMODE_ASSOC);
+require_once 'lib/Database.php';
+$db = new Database($dsn);
 
 
 
@@ -71,7 +67,8 @@ if ($auth->checkAuth()) {
 
 function show_login_form() {
 	global $auth, $page;
-	$page->setBody("<div class='span-6 prepend-9 append-9 last prepend-top'>");
+	$page->setBody("<div class='container'>
+	<div class='span-6 prepend-9 append-9 last prepend-top'>");
 	$page->addBodyContent(login_form($auth->getUsername(), $auth->getStatus(), $auth));
 	$page->addBodyContent("</div>\n</div><!-- end div.container -->");
 	$page->display();
@@ -246,3 +243,43 @@ function wikiformat_doco() {
 }
 
 
+
+
+function error($error) {
+	require_once 'HTML/Page2.php';
+	$page = new HTML_Page2();
+	$title = 'Error ' . $error->getCode() . ': ' . $error->getType();
+	$page->setTitle($title);
+	$page->addStyleDeclaration("body {background-color:darkslategray; color:yellow; margin:3em}");
+	//ob_start();
+	//print_r($error->getBacktrace());
+	//$backtrace = ob_get_clean();
+	$page->addBodyContent("
+		<h1>$title</h1>
+		<p><strong>" . $error->getMessage() . "</strong></p>
+		<h2>Debug Information</h2>
+		<pre>" . $error->getDebugInfo() . "</pre>
+		<h2>Backtrace</h2>
+		<table style='width:100%'>
+			<tr>
+				<th>File</th>
+				<th>Line</th>
+				<th>Class</th>
+				<th>Function</th>
+			</tr>");
+	foreach ($error->getBacktrace() as $bt) {
+		$file = (isset($bt['file'])) ? $bt['file'] : '';
+		$line = (isset($bt['line'])) ? $bt['line'] : '';
+		$class = (isset($bt['class'])) ? $bt['class'] : '';
+		$function = (isset($bt['function'])) ? $bt['function'] : '';
+		$page->addBodyContent("<tr>
+			<td>$file</td>
+			<td>$line</td>
+			<td>$class</td>
+			<td>$function</td>
+		</tr>");
+	}
+	$page->addBodyContent("</table>");
+	$page->display();
+	die();
+}
