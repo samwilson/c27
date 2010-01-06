@@ -1,0 +1,13 @@
+AddType application/x-httpd-php-source .phps
+
+ErrorDocument 404 /0
+
+RewriteEngine On
+RewriteBase /~sam/channel27
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([0-9]{1,4})[\-/]?([0-9]{1,2})?/?$ index.php?year=$1&month=$2 [L,QSA]
+RewriteRule ^images/?$ images.php [QSA]
+RewriteRule ^images/([0-9]+)/?(.*)$ images.php?id=$1&size=$2 [QSA]
+RewriteRule ^images/annus/([0-9]{4}) images.php?year=$1 [QSA]
+
