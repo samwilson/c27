@@ -203,17 +203,19 @@ foreach ($people as $pid=>$name) {
             }
             $from_id = null;
             $to_id = null;
-            $year = null;
+            //$year = null;
         } else { // There was no last email.
             $year = date('Y');
             $with = $pid;
             $class = '';
         }
-        $page->addBodyContent("<li>
-                <a class='$class' href='?with=$with&year=$year#reply-form'>
-                $name
-                </a>
-                </li>");
+        $page->addBodyContent(
+            "<li>\n".
+            "  <a class='$class' href='?with=$with&year=$year#reply-form'>\n".
+            "    $name\n".
+            "  </a>\n".
+            "</li>\n"
+        );
     }
 }
 $page->addBodyContent("</ul><hr />");
