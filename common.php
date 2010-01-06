@@ -212,7 +212,7 @@ function wikiformat($in) {
     // Ellipses.
     //$out = preg_replace("/\.\.\./", "&thinsp;&hellip;&thinsp;", $out);
     // Three-star divider paragraph.
-    $out = preg_replace("|<p>\*\*\*</p>|", "<p style='text-align:center'>* * *</p>", $out);
+    $out = preg_replace("|<p>\*\*\*</p>|", "<p style='text-align:center; letter-spacing:0.4em'>* * *</p>", $out);
     // Links.
     //$out = preg_replace("/\[\[([^|]*)\|([^\]]*)\]\]/", "<a href='$1'>$2</a>", $out);
     //$out = preg_replace("|[^\"'](https?://([^\s]*))|", " <a href='$1'>$2</a>", $out);
@@ -228,10 +228,13 @@ function wikiformat($in) {
     //$out = preg_replace("|</p>\n<p>#|", "</li>\n<li>", $out);
     //$out = preg_replace("|<li>(.*)</p>|", "<li>$1</li>\n</ol>", $out);
     // Headings.
-    $out = preg_replace("|<p>==(.*)==</p>|", "\n<h2>$1</h2>\n", $out);
+    $out = preg_replace("|<p>==(.*)==</p>|", "\n<h4>$1</h4>\n", $out);
+
+    // LaTeX logo
+    $out = preg_replace("|LaTeX|", '<span class="latex">L<sup>a</sup>&Tau;<sub>&epsilon;</sub>&Chi;</span>', $out);
 
     $typo = new phpTypography();
-    $out = $typo->process($out);
+    $out = @$typo->process($out);
 
     return $out;
 }
@@ -242,14 +245,16 @@ function wikiformat($in) {
 function wikiformat_doco() {
     return "
     <ul>
-    <li>Links <code>[[</code>id<code>|</code>text<code>]]</code> and <code>http[s]://</code>blah.com (no trailing slash)</li>
+    <!--li>Links <code>[[</code>id<code>|</code>text<code>]]</code> and <code>http[s]://</code>blah.com (no trailing slash)</li-->
     <li>Emphasis: <code>''</code>text<code>''</code>.  Strong emphasis: <code>'''</code>text<code>'''</code></li>
-    <li>Lists: <code>*</code>text and <code>#</code>text (blank line before)</li>
-    <li>Images: <code>[[img:</code>id<code>]]</code></li>
-    <li>Headings: <code>==</code>heading<code>==</code> (there is only H2)</li>
-    <li>Em dashes: <code>---</code>.&nbsp; Ellipses: <code>...</code>.&nbsp;  No spaces before or after.</li>
+    <li>Lists: <code>*</code>unordered and <code>#</code>ordered (Blank line before.)</li>
+    <!--li>Images: <code>[[img:</code>id<code>]]</code></li-->
+    <li>Headings: <code>==</code>heading<code>==</code> (Creates a level 4 heading.)</li>
+    <li>Em dashes: <code>--</code> or <code>---</code>&nbsp; Ellipses: <code>...</code>&nbsp;  (Spaces before or after don't matter.)</li>
     <li>Quotations: <code>:</code> at the begining of one or more paragraphs.</li>
-    <li>Divider: <code>***</code> on a line by itself.</li>
+    <li>Code: <code>@@</code>text<code>@@</code>
+    <li>Divider: <code>***</code> on a line by itself becomes centred and spaced.</li>
+    <li><code>LaTeX</code> is converted to <span class='latex'>L<sup>a</sup>&Tau;<sub>&epsilon;</sub>&Chi;</span>.
     </ul>
     ";
 }

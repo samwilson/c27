@@ -84,7 +84,7 @@ if (isset($_GET['id'])) {
 
 $id_input_field = (isset($_GET['id'])) ? "<input type='hidden' name='id' value='".$_GET['id']."' />" : '';
 $entry_date = (isset($_GET['id'])) ? substr($data['date_and_time'],0,7) : date('Y-m');
-$return_to = (isset($_GET['return_to'])) ? $_GET['return_to'] : "/$entry_date";
+$return_to = (isset($_GET['return_to'])) ? $_GET['return_to'] : WEBROOT."/$entry_date";
 
 $page->addBodyContent("
 <div class='span-12 prepend-6 append-6 last'>
@@ -103,24 +103,22 @@ $page->addBodyContent("
         </div>
 
         <div class='span-12 last'>
-            <textarea class='text span-12' rows='24' name='entry_text'>".$data['entry_text']."</textarea>
+            <textarea class='text span-12' rows='24' style='height:24em' name='entry_text'>".$data['entry_text']."</textarea>
         </div>
 
         <div class='span-12 last'>
-            <label>Tags:</label>
             <input class='span-12' type='text' name='tags' value=\"$tag_data\" />
         </div>
 
         <div class='span-8'>
             ".getAuthLevelRadios($data['auth_level'])."
         </div>
-        <div class='span-4 last'>
-            <button type='submit' class='button positive center' name='save_journal_entry'>
-                Save
-                <img src='/css/blueprint/plugins/buttons/icons/tick.png' alt=''/>
-            </button>
+        <div class='span-4 last' style='text-align:right'>
+            <input type='submit' class='button positive center' name='save_journal_entry' value='Save'>
         </div>
-
+        <div class='span-12 last prepend-top'>
+            ".wikiformat_doco()."
+        </div>
     </form>
 </div>
 ");

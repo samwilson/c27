@@ -156,6 +156,9 @@ foreach ($db->fetchAll($sql) as $image) {
 
 
 
+
+
+
 // Put it all together.
 ksort($entries);
 $page->addBodyContent("<div class='span-18'>");
@@ -164,15 +167,14 @@ if (count($entries) < 1) {
 }
 $day = '';
 foreach ($entries as $key=>$entry) {
-    /*$new_day = date('l, F j<\s\u\p>S</\s\u\p> Y',strtotime($entry['date_and_time']));
-	if ($day!=$new_day) {
-		if (!empty($day)) {
-			$page->addBodyContent("\t</div><!-- end .day -->\n\t<div class='day'>"); // If we're already in a day, i.e. not at the begining of the month. 
-		}
-		$day = $new_day;
-		$page->addBodyContent("<h2>$day</h2>");
-	}
-    */
+    $new_day = date('l, F j<\s\u\p>S</\s\u\p> Y',strtotime($entry['date_and_time']));
+    if ($day != $new_day) {
+        if (!empty($day)) {
+            $page->addBodyContent("\t</div><!-- end .day -->"); // If we're already in a day, i.e. not at the begining of the month.
+        }
+        $day = $new_day;
+        $page->addBodyContent("<div class='day box'><h2 class=''>$day</h2>");
+    }
     $page->addBodyContent("
 	<div class='entry {$entry['class']}'>
 		<h3 class=''>{$entry['title']}</h3>
@@ -182,7 +184,7 @@ foreach ($entries as $key=>$entry) {
 	</div>
             ");
 }
-//$page->addBodyContent("</div><!-- end .day -->"); 
+$page->addBodyContent("</div><!-- end .day -->"); 
 $page->addBodyContent("</div><!-- end .blog-entries -->"); 
 
 

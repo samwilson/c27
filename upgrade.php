@@ -97,20 +97,32 @@ CREATE TABLE IF NOT EXISTS users (
   reset_hash varchar(100) NOT NULL
 ) ENGINE=InnoDB;
 ");
-if ($db->fetchRow("SELECT 1 FROM users WHERE id=1")==null) {
+if ($db->fetchRow("SELECT 1 FROM users WHERE id=1") == null) {
 	$db->query("INSERT INTO users SET id=1, username='admin', password=MD5('admin'), auth_level=10");
 }
+$db->query("
+CREATE TABLE IF NOT EXISTS feeds (
+  id int(11) NOT NULL auto_increment PRIMARY KEY,
+  url varchar(200) NOT NULL
+) ENGINE=InnoDB;
+");
+
+
+
+
+
+
 
 $page->setTitle('Upgrade');
 $page->setBody('
 <div class="container">
-	<div class="span-4 prepend-10 append-10 centre">
-		<h1 class="centre prepend-top">Upgrade</h1>
-		<p>
-			<a class="positive button" href="index.php">
-				All done!  Click here to continue.
-			</a>
-		</p>
-	</div>
+    <div class="span-4 prepend-10 append-10 centre">
+        <h1 class="centre prepend-top">Upgrade</h1>
+        <p>
+            <a class="positive button" href="index.php">
+                All done!  Click here to continue.
+            </a>
+        </p>
+    </div>
 </div><!-- end div.container -->');
 $page->display();

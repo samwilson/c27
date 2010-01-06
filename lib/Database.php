@@ -21,26 +21,30 @@ class Database {
         }
         $this->mdb2->setFetchMode(MDB2_FETCHMODE_ASSOC);
 
-        /*
+        
         // Add, edit, or delete records:
         if ( isset($_REQUEST['table_name']) ) {
-                //if (!isset($_REQUEST['action'])) $_REQUEST['action']='add';
-                if ( isset($_POST['save'])) {
-                        $this->save($_POST['table_name'], $_POST);
-                } elseif ( (isset($_REQUEST['delete']) || (isset($_REQUEST['action']) && $_REQUEST['action']=='delete')) && isset($_REQUEST['id']) ) {
-                        $this->delete($_REQUEST['table_name'], $_REQUEST['id']);
-                } elseif (
-                                ((isset($_REQUEST['edit']) || (isset($_REQUEST['action']) && $_REQUEST['action']=='edit')) && isset($_REQUEST['id']))
-                                || (isset($_REQUEST['add']) || (isset($_REQUEST['action']) && $_REQUEST['action']=='add'))
-                        ) {
-                        global $page;
-                        $page->setTitle($_REQUEST['table_name']);
-                        $page->addBodyContent($this->getHtmlForm());
-                        $page->display();
-                        die();
-                }
+            //if (!isset($_REQUEST['action'])) $_REQUEST['action']='add';
+            if ( isset($_POST['save'])) {
+                    $this->save($_POST['table_name'], $_POST);
+            } elseif ( (isset($_REQUEST['delete']) || (isset($_REQUEST['action']) && $_REQUEST['action']=='delete')) && isset($_REQUEST['id']) ) {
+                    $this->delete($_REQUEST['table_name'], $_REQUEST['id']);
+            } elseif (
+                (
+                    ( isset($_REQUEST['edit'])
+                      || (isset($_REQUEST['action']) && $_REQUEST['action']=='edit')
+                    )
+                    && isset($_REQUEST['id'])
+                )
+                || (isset($_REQUEST['add']) || (isset($_REQUEST['action']) && $_REQUEST['action']=='add'))
+            ) {
+                global $page;
+                $page->setTitle($_REQUEST['table_name']);
+                $page->addBodyContent($this->getHtmlForm());
+                $page->display();
+                die();
+            }
         }
-        */
 
     }
 

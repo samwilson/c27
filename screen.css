@@ -5,5 +5,33 @@
 .columnar { list-style-position:inside }
 .columnar li { width:33%; float:left; margin:0}
 
-textarea { height:100px }
+.day { padding:0.3em }
+.entry { background-color:white; padding:1em }
 
+textarea { height:100px }
+code { background-color:#eee; color:darkslategray; font-family: 'Courier New',Courier,monospace }
+
+
+
+/**
+ * LaTeX logo markup from http://nitens.org/taraborelli/texlogo
+ */
+.latex {
+  font-family: Times, "Times New Roman", serif;
+  letter-spacing: 1px;
+}
+.latex sup {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.85em;
+  vertical-align: 0.15em;
+  margin-left: -0.36em;
+  margin-right: -0.15em;
+}
+.latex sub {
+  text-transform: uppercase;
+  vertical-align: -0.5ex;
+  margin-left: -0.1667em;
+  margin-right: -0.125em;
+  font-size: 1em;
+}
