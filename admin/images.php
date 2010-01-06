@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once 'common.php';
 require_once 'HTTP/Upload.php';
 require_once 'HTML/QuickForm.php';
 require_once 'HTML/QuickForm/file.php';
@@ -15,17 +15,32 @@ $page->setTitle('Images');
 
 if ( isset($_GET['show_image'])
      && isset($_GET['id'])
-     && isset($_GET['size']) && ($_GET['size']=='full'||$_GET['size']=='view'||$_GET['size']=='thumb')
-   ) {
-	$filename = DATADIR.'/images/'.$_GET['size'].'/'.$_GET['id'].'.jpg';
-	if (file_exists($filename)) {
-		$length = filesize($filename);
-		header('Content-type: image/jpeg');
-		header('Content-Length: '.$length);
-		header('Content-Disposition: inline; filename="'.basename($filename).'"');
-		readfile($filename);
-		die();
-	}
+     && is_numeric($_GET['id'])
+     && isset($_GET['size'])
+     && ( $_GET['size'] == 'full'
+          || $_GET['size'] == 'view'
+          || $_GET['size'] == 'thumb'
+        )
+) {
+    $filename = DATADIR.'/images/'.$_GET['size'].'/'.$_GET['id'].'.jpg';
+    
+    // Make a viewable size if there isn't one.
+    if (!file_exists($filename)) {
+        scaleimage($_GET['id'], $_GET['size']);
+    }
+
+    // Display the image.
+    if (file_exists($filename)) {
+        $length = filesize($filename);
+        header('Content-type: image/jpeg');
+        header('Content-Length: '.$length);
+        header('Content-Disposition: inline; filename="'.basename($filename).'"');
+        readfile($filename);
+        die();
+    } else {
+        $page->addBodyContent("<p class='error'>File Not Found: $filename</p>");
+    }
+
 }
 
 
@@ -88,21 +103,22 @@ $page->addBodyContent("</ol></div>");
 
 
 if (isset($_POST['upload_image'])) {
-	require_once "HTTP/Upload.php";
-	$upload_to = DATADIR.'/images/IN/';
-	$upload = new HTTP_Upload("en");
-	$file = $upload->getFiles("image");
-	if ($file->isValid()) {
-		$moved = $file->moveTo($upload_to, false);
-		if (PEAR::isError($moved)) {
-			$page->addBodyContent("<p class='message error'>Badness happened: ".$moved->getMessage()."</p>");
-		}
-	} elseif ($file->isError()) {
-		$page->addBodyContent("<p class='message error'>Badness happened: ".$file->errorMsg()."</p>");
-	}
-	$id = importImage("$upload_to/".$file->getProp('name'));
-	header("Location:?action=edit_image&id=$id");
-	die();
+    require_once "HTTP/Upload.php";
+    $uploadTo = DATADIR.'/images/IN/';
+    $upload = new HTTP_Upload("en");
+    $file = $upload->getFiles("image");
+    if ($file->isValid()) {
+        $moved = $file->moveTo($uploadTo, false);
+        if (PEAR::isError($moved)) {
+            $page->addBodyContent("<p class='message error'>Badness happened: ".$moved->getMessage()."</p>");
+        }
+    } elseif ($file->isError()) {
+        $page->addBodyContent("<p class='message error'>Badness happened: ".$file->errorMsg()."</p>");
+    }
+    $uploadedImageFilename = "$uploadTo/".$file->getProp('name');
+    $id = importImage($uploadedImageFilename);
+    header("Location:?action=edit_image&id=$id");
+    die();
 }
 
 
@@ -117,65 +133,96 @@ if (isset($_POST['upload_image'])) {
 
 // Process next image:
 if (isset($_GET['process_next_image'])) {
-	$imagesINdir = DATADIR.'/images/IN';
-	foreach (scandir($imagesINdir) as $file) {
-		if (substr($file, 0, 1)=='.' || is_dir($imagesINdir.'/'.$file)) continue;
-		$fullname = $imagesINdir.'/'.$file;
-		$id = importImage($fullname);
-		header("Location:?action=edit_image&id=$id");
-		die();
-	}
+    $imagesINdir = DATADIR.'/images/IN';
+    if (!is_dir($imagesINdir)) {
+        if (!@mkdir($imagesINdir, 0755, true)) {
+            $page->addBodyContent(
+                '<p class="error">Unable to create new directory:<br />'.
+                '<code>'.$imagesINdir.'</code></p>'
+            );
+            $page->display();
+            die();
+        }
+    }
+    foreach (scandir($imagesINdir) as $file) {
+        if (substr($file, 0, 1)=='.' || is_dir($imagesINdir.'/'.$file)) continue;
+        $fullname = $imagesINdir.'/'.$file;
+        $id = importImage($fullname);
+        header("Location:?action=edit_image&id=$id");
+        die();
+    }
 }
 // Process 10 images:
 if ( isset($_GET['process_pending_images']) ) {
-	$imagesINdir = DATADIR.'/images/IN';
-	$numberToProcess = 10;
-	foreach (scandir($imagesINdir) as $file) {
-		if (substr($file, 0, 1)=='.' || is_dir($imagesINdir.'/'.$file)) continue;
-		$fullname = $imagesINdir.'/'.$file;
-		importImage($fullname);
-		$numberToProcess--;
-		if ($numberToProcess==0) {
-			break;
-		}
-	}
+    $imagesINdir = DATADIR.'/images/IN';
+    $numberToProcess = 10;
+    foreach (scandir($imagesINdir) as $file) {
+        if (substr($file, 0, 1)=='.' || is_dir($imagesINdir.'/'.$file)) continue;
+        $fullname = $imagesINdir.'/'.$file;
+        importImage($fullname);
+        $numberToProcess--;
+        if ($numberToProcess==0) {
+            break;
+        }
+    }
 }
 function importImage($fullname) {
-	global $db, $page;
-	$title = basename($fullname);
-	$date = '1111-11-11 11:11:11';
-	if ($exif_date = @exif_read_data($fullname, 'IFD0', 0)) {
-		if (isset($exif_date['DateTime'])) {
-			$date = $exif_date['DateTime']; 
-		}
-		if (isset($exif_date['CreateDate'])) {
-			$date = $exif_date['CreateDate']; 
-		}
-	} elseif ( preg_match('|([0-9]{4}-[0-9]{2}-[0-9]{2}).(([0-9]{2})([0-9]{2}))?(.*)jpg|i',$title,$date_matches) > 0 ) {
-		//print_r($date_matches);
-		$hour = (isset($date_matches[3])) ? $date_matches[3] : '00';
-		$minute = (isset($date_matches[4])) ? $date_matches[4] : '00';
-		$date = $date_matches[1]." $hour:$minute";
-		$title = (isset($date_matches[5])) ? trim($date_matches[5]) : $title;
-	}
-	$title = str_replace('_', ' ', $title);
-	mysql_query("INSERT INTO images SET caption='".$db->esc($title)."', date_and_time='".$db->esc($date)."', auth_level='10'");
-	if (mysql_error()) {
-		$page->addBodyContent("<p class='error'>Something went wrong with <code>$file</code>: ".mysql_error()."</p>");
-	} else {
-		$id = mysql_insert_id();
-		if (!rename($fullname, DATADIR."/images/full/$id.jpg")) {
-			$page->addBodyContent("<p class='error'>Could not move $fullname to ".DATADIR."/images/full/$id.jpg</p>");
-		}
-		
-		// make other sizes:
-		$out = shell_exec("convert -resize 80x80 ".DATADIR."/images/full/$id.jpg ".DATADIR."/images/thumb/$id.jpg");
-		$out .= shell_exec("convert -resize 500x500 ".DATADIR."/images/full/$id.jpg ".DATADIR."/images/view/$id.jpg");
-		if (!empty($out)) $page->addBodyContent("<p class='notice'>$out</p>");
-		
-		$page->addBodyContent("<div class='success span-24 last'>Image $id accessioned.</div>");
-		return $id;
-	}
+    global $db, $page;
+    $title = basename($fullname);
+    $date = '1111-11-11 11:11:11';
+    if ($exif_date = @exif_read_data($fullname, 'IFD0', 0)) {
+        if (isset($exif_date['DateTime'])) {
+            $date = $exif_date['DateTime'];
+        }
+        if (isset($exif_date['CreateDate'])) {
+            $date = $exif_date['CreateDate'];
+        }
+    } elseif ( preg_match('|([0-9]{4}-[0-9]{2}-[0-9]{2}).(([0-9]{2})([0-9]{2}))?(.*)jpg|i',$title,$date_matches) > 0 ) {
+        //print_r($date_matches);
+        $hour = (isset($date_matches[3])) ? $date_matches[3] : '00';
+        $minute = (isset($date_matches[4])) ? $date_matches[4] : '00';
+        $date = $date_matches[1]." $hour:$minute";
+        $title = (isset($date_matches[5])) ? trim($date_matches[5]) : $title;
+    }
+    $title = str_replace('_', ' ', $title);
+    mysql_query("INSERT INTO images SET caption='".$db->esc($title)."', date_and_time='".$db->esc($date)."', auth_level='10'");
+    if (mysql_error()) {
+        $page->addBodyContent("<p class='error'>Something went wrong with <code>$file</code>: ".mysql_error()."</p>");
+    } else {
+        $id = mysql_insert_id();
+        $destFilename = DATADIR."/images/full/$id.jpg";
+        // Create destination directory if neccessary.
+        $destDir = dirname($destFilename);
+        if (!is_dir($destDir)) {
+            if (!@mkdir($destDir, 0755, true)) {
+                $page->addBodyContent(
+                    '<p class="error">Unable to create new directory:<br />'.
+                    '<code>'.$destDir.'</code></p>'
+                );
+                $page->display();
+                die();
+            } else {
+                $page->addBodyContent(
+                    '<p class="success">Created new directory:<br />'.
+                    '<code>'.$destDir.'</code></p>'
+                );
+            }
+        }
+        if (!rename($fullname, $destFilename)) {
+            $page->addBodyContent(
+                "<p class='error'>".
+                "Could not move<br />$fullname<br />to<br />$destFilename".
+                "</p>"
+            );
+        }
+
+        // make other sizes:
+        scaleimage($id, 'thumb');
+        scaleimage($id, 'view');
+        
+        $page->addBodyContent("<div class='success span-24 last'>Image $id accessioned.</div>");
+        return $id;
+    }
 }
 
 
@@ -185,6 +232,15 @@ function importImage($fullname) {
 
 
 
+
+
+
+// Pending file count:
+$inDir = DATADIR . '/images/IN';
+$pendingCount = 0;
+if (is_dir($inDir)) {
+    $pendingCount = count(preg_grep("/^[^\.]/",scandir($inDir)));
+}
 
 
 
@@ -198,25 +254,17 @@ $file_element = new HTML_QuickForm_file('image','');
 $submit_element = new HTML_QuickForm_submit('upload_image','Go!');
 $form->addGroup(array($file_element,$submit_element),'','Upload: ');
 $page->addBodyContent("
-	<div class='span-15'>
-		".$form->toHtml()."
-	</div>
-	<div class='span-3'>
-		<a class='button' href='?process_pending_images'>
-			Process next 10 images.
-		</a>
-	</div>
-	<div class='span-3'>
-		<a href='?process_next_image' class='button'>
-			Process next image.
-		</a>
-	</div>
-	<div class='span-3 last'>
-		<a class='button'>
-			".count(preg_grep("/^[^\.]/",scandir(DATADIR."/images/IN")))." remaining.
-		</a>
-	</div>
-	");
+    <div class='span-10'>
+            ".$form->toHtml()."
+    </div>
+    <div class='span-13 last'>
+        <p>
+            $pendingCount images remain to be accessioned.
+            <a href='?process_pending_images'>Process ten.</a>
+            <a href='?process_next_image'>Process one.</a>
+        </p>
+    </div>
+");
 
 
 
@@ -238,12 +286,12 @@ $page->addBodyContent("
 
 // Rotate
 if ( isset($_GET['rotate']) && is_numeric($_GET['rotate']) && isset($_GET['id']) ) {
-	$degrees = $_GET['rotate'];
-	$id = $_GET['id'];
-	shell_exec("convert -rotate $degrees ".DATADIR."/images/full/$id.jpg ".DATADIR."/images/full/$id.jpg");
-	shell_exec("convert -rotate $degrees ".DATADIR."/images/view/$id.jpg ".DATADIR."/images/view/$id.jpg");
-	shell_exec("convert -rotate $degrees ".DATADIR."/images/thumb/$id.jpg ".DATADIR."/images/thumb/$id.jpg");
-	header("Location:?action=edit_image&id=$id");
+    $degrees = $_GET['rotate'];
+    $id = $_GET['id'];
+    shell_exec("convert -rotate $degrees ".DATADIR."/images/full/$id.jpg ".DATADIR."/images/full/$id.jpg");
+    shell_exec("convert -rotate $degrees ".DATADIR."/images/view/$id.jpg ".DATADIR."/images/view/$id.jpg");
+    shell_exec("convert -rotate $degrees ".DATADIR."/images/thumb/$id.jpg ".DATADIR."/images/thumb/$id.jpg");
+    header("Location:?action=edit_image&id=$id");
 }
 
 
@@ -260,30 +308,31 @@ if ( isset($_GET['rotate']) && is_numeric($_GET['rotate']) && isset($_GET['id'])
 
 
 
-if (isset($_POST['save_image'])) {
-	$db->save('images', array(
-		'id' => $_POST['id'],
-		'date_and_time' => $_POST['date_and_time'],
-		'caption' => $_POST['caption'],
-		'auth_level' => $_POST['auth_level']
-	));
-		
-	// Save tags
-	$db->query("DELETE FROM tags_to_images WHERE image=".$db->esc($_POST['id']));
-	$tags = array_map('trim', explode(',',$_POST['tags']));
-	foreach ($tags as $tag) {
-		if (!empty($tag)) {
-			$exists = mysql_num_rows(mysql_query("SELECT * FROM tags WHERE LOWER(title) LIKE LOWER('".$db->esc($tag)."')"));
-			if (!$exists) {
-				mysql_query("INSERT INTO tags SET title='".$db->esc($tag)."'");
-				$tag_id = mysql_insert_id();
-			} else {
-				$tag_id = $db->fetchAll("SELECT id FROM tags WHERE LOWER(title) LIKE LOWER('".$db->esc($tag)."')");
-				$tag_id = $tag_id[0]['id'];
-			}
-			$db->save('tags_to_images', array('tag'=>$tag_id,'image'=>$_POST['id']));
-		}
-	}
+if (!empty($_POST)) {
+    $db->save('images', $_POST);
+            /*array(
+            'id' => $_POST['id'],
+            'date_and_time' => $_POST['date_and_time'],
+            'caption' => $_POST['caption'],
+            'auth_level' => $_POST['auth_level']*/
+    //));
+
+    // Save tags
+    $db->query("DELETE FROM tags_to_images WHERE image=".$db->esc($_POST['id']));
+    $tags = array_map('trim', explode(',',$_POST['tags']));
+    foreach ($tags as $tag) {
+        if (!empty($tag)) {
+            $exists = mysql_num_rows(mysql_query("SELECT * FROM tags WHERE LOWER(title) LIKE LOWER('".$db->esc($tag)."')"));
+            if (!$exists) {
+                mysql_query("INSERT INTO tags SET title='".$db->esc($tag)."'");
+                $tag_id = mysql_insert_id();
+            } else {
+                $tag_id = $db->fetchAll("SELECT id FROM tags WHERE LOWER(title) LIKE LOWER('".$db->esc($tag)."')");
+                $tag_id = $tag_id[0]['id'];
+            }
+            $db->save('tags_to_images', array('tag'=>$tag_id,'image'=>$_POST['id']));
+        }
+    }
 
 
 }
@@ -307,76 +356,77 @@ if (isset($_POST['save_image'])) {
 
 
 // Show 1 image edit form.
-function image_edit_url($id) { return "?action=edit_image&id=$id&return_to=".urlencode("?action=edit_image&id=$id"); }
+function image_edit_url($id) {
+    return "?action=edit_image&id=$id&return_to=".urlencode("?action=edit_image&id=$id");
+}
 if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id'])) {
-	
-	$this_image = $db->fetchAll("SELECT id, date_and_time, caption, auth_level, year(date_and_time) as year, month(date_and_time) as month ".
-	"FROM images WHERE id='".$db->esc($_GET['id'])."' LIMIT 1");
-	$this_image = $this_image[0];
-	$prev = $db->fetchAll("SELECT * FROM images WHERE date_and_time<='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' ORDER BY date_and_time DESC LIMIT 1");
-	$prev_id = (isset($prev[0])) ? $db->esc($prev[0]['id']) : 0;
-	$next = $db->fetchAll("SELECT * FROM images WHERE date_and_time>='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' AND id!='$prev_id' ORDER BY date_and_time ASC LIMIT 1");
-	/*$page->addBodyContent("<p class='centre'>");
+
+    $this_image = $db->fetchAll("SELECT id, date_and_time, caption, auth_level, year(date_and_time) as year, month(date_and_time) as month ".
+            "FROM images WHERE id='".$db->esc($_GET['id'])."' LIMIT 1");
+    $this_image = $this_image[0];
+    $prev = $db->fetchAll("SELECT * FROM images WHERE date_and_time<='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' ORDER BY date_and_time DESC LIMIT 1");
+    $prev_id = (isset($prev[0])) ? $db->esc($prev[0]['id']) : 0;
+    $next = $db->fetchAll("SELECT * FROM images WHERE date_and_time>='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' AND id!='$prev_id' ORDER BY date_and_time ASC LIMIT 1");
+    /*$page->addBodyContent("<p class='centre'>");
 	if (isset($prev[0])) $page->addBodyContent("<a href='".image_edit_url($prev[0]['id'])."'>&laquo; Previous</a> | ");
 	if (isset($next[0])) $page->addBodyContent("<a href='".image_edit_url($next[0]['id'])."'>Next &raquo;</a><br />");
 	$page->addBodyContent("</p>");
-	*/
+    */
 
-	// Tags:
-	$tag_data = "";
-	$tags = $db->fetchAll("SELECT title FROM tags JOIN tags_to_images on (tags.id=tags_to_images.tag) WHERE tags_to_images.image='".$db->esc($_GET['id'])."'");
-	foreach ($tags as $tag) {
-		$tag_data .= $tag['title'].", ";
-	}
-	$tag_data = substr($tag_data, 0, -2); // Strip trailing comma-space.
+    // Tags:
+    $tag_data = "";
+    $tags = $db->fetchAll("SELECT title FROM tags JOIN tags_to_images on (tags.id=tags_to_images.tag) WHERE tags_to_images.image='".$db->esc($_GET['id'])."'");
+    foreach ($tags as $tag) {
+        $tag_data .= $tag['title'].", ";
+    }
+    $tag_data = substr($tag_data, 0, -2); // Strip trailing comma-space.
 
-	$page->addBodyContent("<hr />
+    $page->addBodyContent("<hr />
 	<div class='span-11'>
-		<img src='?show_image&size=view&id=".$_GET['id']."' style='max-width:100%' /><br />
-		Rotate 
-		<a href='?rotate=90&id={$_GET['id']}'>90&deg;</a>,
-		<a href='?rotate=180&id={$_GET['id']}'>180&deg;</a>, or
-		<a href='?rotate=270&id={$_GET['id']}'>270&deg;</a> clockwise.
+            <img src='?show_image&size=view&id=".$_GET['id']."' style='max-width:100%' /><br />
+            Rotate
+            <a href='?rotate=90&id={$_GET['id']}'>90&deg;</a>,
+            <a href='?rotate=180&id={$_GET['id']}'>180&deg;</a>, or
+            <a href='?rotate=270&id={$_GET['id']}'>270&deg;</a> clockwise.
 	</div>
 	<div class='span-13 last'>
-		<form action='images.php?action=edit_image&id=".$this_image['id']."' method='post'>
-		<div class='hide'>
-			<input type='hidden' name='save_image' value='true' />
-			<input type='hidden' name='id' value='".$this_image['id']."' />
-		</div>
-		
-		<div class='span-3'>
-			<label for='date_and_time'>Date:</label>
-		</div>
-		<input class='span-10 last' type='text' name='date_and_time' value='".$this_image['date_and_time']."' id='date_and_time' />
-		
-		<div class='span-13 last'>
-			<label for='caption'>Caption:</label>
-		</div>
-		<textarea class='span-13 last' style='height:4em' id='caption' name='caption'>".$this_image['caption']."</textarea>
-		
-		<div class='span-3'>
-			<label for='tags'>Tags:</label>
-		</div>
-		<input type='text' name='tags' value='$tag_data' class='span-10 last'/>
+            <form action='images.php?action=edit_image&id=".$this_image['id']."' method='post'>
+            <div class='hide'>
+                    <input type='hidden' name='save_image' value='true' />
+                    <input type='hidden' name='id' value='".$this_image['id']."' />
+            </div>
 
-		<div class='span-13 last' style='text-align:center'>
-			".getAuthLevelRadios($this_image['auth_level'])."
-		</div>
-		
-		<div class='span-13 last'>
-			<input type='submit' name='save_image' value='Save' /> or save and return to
-			<input type='submit' name='return_to' value='?process_next_image' />
-			<input type='submit' name='return_to' value='?year=".$this_image['year']."&month=".$this_image['month']."' />
-		</div>
-		</form>
-		<table>
+            <div class='span-3'>
+                    <label for='date_and_time'>Date:</label>
+            </div>
+            <input class='span-10 last' type='text' name='date_and_time' value='".$this_image['date_and_time']."' id='date_and_time' />
+
+            <div class='span-13 last'>
+                    <label for='caption'>Caption:</label>
+            </div>
+            <textarea class='span-13 last' style='height:4em' id='caption' name='caption'>".$this_image['caption']."</textarea>
+
+            <div class='span-3'>
+                    <label for='tags'>Tags:</label>
+            </div>
+            <input type='text' name='tags' value='$tag_data' class='span-10 last'/>
+
+            <div class='span-13 last'>
+        ".getAuthLevelRadios($this_image['auth_level'])."
+            </div>
+
+            <div class='span-13 last'>
+                <input type='submit' name='save_image' value='Save' /> or save and return to
+                <input type='submit' name='return_to' value='?process_next_image' />
+                <input type='submit' name='return_to' value='".WEBROOT."/".$this_image['year']."-".$this_image['month']."' />
+            </div>
+            </form>
 	");
-	foreach (exif_read_data(DATADIR.'/images/full/'.$this_image['id'].'.jpg') as $name=>$value) {
-		$page->addBodyContent("<tr><th>$name</th><td>$value</td></tr>");
-	}
-	$page->addBodyContent("</table></div>");
-	
+    /*foreach (exif_read_data(DATADIR.'/images/full/'.$this_image['id'].'.jpg') as $name=>$value) {
+        $page->addBodyContent("<tr><th>$name</th><td>$value</td></tr>");
+    }*/
+    $page->addBodyContent("</div>");
+
 }
 
 
@@ -431,4 +481,40 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
 
 $page->addBodyContent('</div><!-- end div.container -->');
 $page->display();
-?>
+
+
+
+
+
+
+/**
+ *
+ * @return void
+ */
+function scaleimage($id, $sizeLabel) {
+    global $page;
+    require_once 'Image/Transform.php';
+    if ($sizeLabel=='thumb') {
+        $size = 80;
+    }
+    if ($sizeLabel=='view') {
+        $size = 500;
+    }
+    $original = DATADIR."/images/full/$id.jpg";
+    $transformer = Image_Transform::factory(DRIVER_FOR_IMAGE_TRANSFORM);
+    if (PEAR::isError($transformer)) {
+        $page->addBodyContent('Error with instantiating Image_Transform: '.$transformer->getMessage(), 'error');
+    }
+    $ret = $transformer->load($original);
+    if (PEAR::isError($ret)) {
+        $page->addBodyContent("Unable to load $original.  ".$ret->getMessage(), 'error');
+    }
+    $ret = $transformer->scaleMaxLength($size);
+    if (PEAR::isError($ret)) {
+        $page->addBodyContent("Unable to scale image $original to $size.  ".$ret->getMessage(), 'error');
+    }
+    $ret = $transformer->save(DATADIR."/images/$sizeLabel/$id.jpg");
+    if (PEAR::isError($ret)) {
+        $page->addBodyContent("Error with saving to ".DATADIR."/images/$sizeLabel/$id.jpg<br />".$ret->getMessage(), 'error');
+    }
+}

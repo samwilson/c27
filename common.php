@@ -1,12 +1,18 @@
 <?php
-require_once 'config.php';
 
+// Include the configuration file.
+$configFilename = dirname(__FILE__) . '/config.php';
+if (!file_exists($configFilename)) {
+    header("Content-Type:text/plain");
+    die("Configuration file not found.\nLooking for: $configFilename");
+}
+require_once $configFilename;
 
-require_once 'lib/Database.php';
+// Set up database.
+require_once dirname(__FILE__) . '/lib/Database.php';
 $db = new Database($dsn);
 
-
-
+// Set up HTML page object.
 require_once 'HTML/Page2.php';
 $page = new HTML_Page2();
 $page->setDoctype('XHTML 1.0 Strict');
@@ -19,13 +25,16 @@ $page->addRawHeaderData("\t\t".'<!--[if lt IE 8]>'."\n".
 "\t\t\t".'<link rel="stylesheet" href="'.WEBROOT.'/lib/css/blueprint/ie.css" type="text/css" media="screen, projection">'."\n".
 "\t\t".'<![endif]-->'."\n");
 $page->addStylesheet(WEBROOT.'/screen.css','text/css','screen');
+$page->setTitle(SITETITLE);
+$page->addHeadLink($openid_server, "openid.server");
+$page->addHeadLink($openid_delegate, "openid.delegate");
 
-// Javascript stuff
+// Javascript stuff.
 $page->addScript(WEBROOT.'/common.js');
 $page->setAttribute('onload', 'onBodyLoad()');
 
 // Set up structure for BlueprintCSS.
-$page->addBodyContent('<div class="container showgrid">');
+$page->addBodyContent('<div class="container">');
 // Don't forget to add the following at the end of every script:
 #$page->addBodyContent('</div><!-- end div.container -->');
 #$page->display();
@@ -47,11 +56,12 @@ if (isset($_GET['login']) || isset($_GET['logout'])) {
 	show_login_form();
 }
 if ($auth->checkAuth()) {
-	$page->addBodyContent('
-	<div class="small" style="position:absolute; top:0; right:0; text-align:right">
-		Logged in as '.$auth->getUsername().'.
-		<a href="?logout" class="button negative">Logout</a>
-	</div>');
+    $page->addBodyContent('
+    <ul class="small" style="position:absolute; top:0; right:0; text-align:right">
+        <li><a href="'.WEBROOT.'">'.SITETITLE.'</a></li>
+        <li>Logged in as '.$auth->getUsername().'.</li>
+        <li><a href="?logout">Logout</a></li>
+    </ul>');
 }
 
 
@@ -250,7 +260,11 @@ function error($error) {
 	$page = new HTML_Page2();
 	$title = 'Error ' . $error->getCode() . ': ' . $error->getType();
 	$page->setTitle($title);
-	$page->addStyleDeclaration("body {background-color:darkslategray; color:yellow; margin:3em}");
+	$page->addStyleDeclaration("
+		body { background-color:darkslategray; color:yellow; margin:3em }
+		table { border:1px solid yellow; border-collapse:collapse }
+		th { text-align:left; border-bottom:1px solid yellow }
+	");
 	//ob_start();
 	//print_r($error->getBacktrace());
 	//$backtrace = ob_get_clean();

@@ -1,7 +1,6 @@
 <?php
-require_once 'config.php';
+require_once 'common.php';
 $page->setTitle('Feeds');
-$number_of_enteries_to_show = 40;
 
 $entries = array();
 require_once 'XML/Feed/Parser.php';
@@ -19,8 +18,10 @@ while ($feed_data = mysql_fetch_assoc($res)) {
 		try {
 			$feed = new XML_Feed_Parser($feed_source);
 		} catch (XML_Feed_Parser_Exception $e) {
-			$page->addBodyContent("<div class='error'>
-				The data from ".$feed_data['url']." is not a valid feed, and throws the exception:
+			$page->addBodyContent(
+				"<div class='error'>The data from
+				<a href='".$feed_data['url']."'>".$feed_data['url']."</a> is
+				not a valid feed, and throws the exception:
 				<pre><code>".$e->getMessage()."</code></pre>
 				</div>");
 		}
@@ -56,8 +57,7 @@ $page->addBodyContent("<div class='span-24 last'>
 	<ul>");
 $last_date = 0;
 $bkgclr = '#eee';
-//foreach ($entries as $entry) {
-for ($i=0;$i<$number_of_enteries_to_show;$i++) {
+for ($i=0; $i < $number_of_feed_enteries_to_show; $i++) {
 	$entry = $entries[$i];
 	$date_text = date('F jS',$entry['date']);
 	if ($last_date!=$date_text) {
@@ -82,4 +82,3 @@ $page->addBodyContent("    </ul>
 
 $page->addBodyContent("</div><!-- end .container -->");
 $page->display();
-?>

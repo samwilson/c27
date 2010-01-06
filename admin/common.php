@@ -2,6 +2,7 @@
 require_once '../common.php';
 
 
+
 if ( $auth->getAuthData('auth_level') < 10 ) {
 	show_login_form();
 }
@@ -16,7 +17,7 @@ $main_menu = array(
 	'images.php' => 'Images',
 	'feeds.php' => 'Feeds',
 	'tags.php' => 'Tags');
-$page->addBodyContent("<div class='span-24 last prepend-top'><ul class='tabs'>");
+$page->addBodyContent("<div class='span-24 last prepend-top clear'><ul class='tabs'>");
 foreach ($main_menu as $filename=>$title) {
 	$selected = ($filename==basename($_SERVER['PHP_SELF'])) ? 'class="selected"' : '';
 	$page->addBodyContent("<li><a $selected href='$filename'>$title</a></li>");

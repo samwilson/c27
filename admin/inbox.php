@@ -6,13 +6,12 @@ require_once 'HTML/QuickForm/select.php';
 require_once 'HTML/QuickForm/submit.php';
 require_once 'HTML/QuickForm/textarea.php';
 
-$defaultMailbox = "INBOX.Archives";
-$message_id = 1;
 
 /*******************************************************************************
- * basic setup of general objects
+ * basic setup of general objects and variables.
  ******************************************************************************/
-$page->setTitle("G.P.O. Inbox");
+$message_id = 1;
+$page->setTitle("Inbox");
 
 require_once 'Net/IMAP.php';
 $imap = new Net_IMAP($mail_server['server'], $mail_server['port']);
@@ -29,15 +28,16 @@ if (PEAR::isError($mboxSelect)) {
 /*******************************************************************************
  * Archive email
  ******************************************************************************/
-
+if (isset($_POST['save'])) {
+    $db->save('emails', $_POST);
+}
 if ( (isset($_POST['save']) && $_POST['save']=='Archive + Delete') || isset($_POST['delete']) ) {
 	$imap->deleteMsg($message_id);
 	$imap->expunge();
 	header("Location:".$_SERVER['PHP_SELF']);
 	exit();
-}
 
-else if (isset($_POST['save']) && $_POST['save']=='Archive Only') {
+} else if (isset($_POST['save']) && $_POST['save']=='Archive Only') {
 	header("Location:".$_SERVER['PHP_SELF']);
 	exit();
 }
@@ -72,7 +72,7 @@ elseif ($msgCount > 0) {
 	
 	// Set defaults.
 	$from_id = 0;
-	$to_id = 9;
+	$to_id = MAIN_USER_ID;
 	$subject = $headers['SUBJECT'];
 	if (empty($subject) || $subject=='NIL') {
 		$subject = '[No Subject]';

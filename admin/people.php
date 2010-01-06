@@ -5,6 +5,7 @@ include 'HTML/QuickForm/text.php';
 include 'HTML/QuickForm/textarea.php';
 
 $page->setTitle('People');
+
  
 /*******************************************************************************
  * Construct possible person.
@@ -33,8 +34,10 @@ if (isset($email_address[0])) {
 if (isset($_GET['edit']) && is_numeric($_GET['id'])) {
 	$defaults = $db->fetchAll("SELECT * FROM people WHERE id='".$db->esc($_GET['id'])."' LIMIT 1");
 	$defaults = $defaults[0];
+	$header = 'Editing person #'.$_GET['id'];
 } else {
 	$defaults = array();
+	$header = 'Enter new person data';
 }
 
 /*******************************************************************************
@@ -43,21 +46,23 @@ if (isset($_GET['edit']) && is_numeric($_GET['id'])) {
 
 $form = new HTML_QuickForm();
 $form->setDefaults($defaults);
-$form->addElement('header','','New/Edit Person');
-$form->addElement('hidden','id');
-$form->addElement('hidden','table_name','people');
+$form->addElement('header', null, $header);
+$form->addElement('hidden', 'id');
 if (isset($_GET['person_text'])) {
 	$form->addElement('static',null,'Person text: ', htmlentities($_GET['person_text']));
 }
-$form->addElement('text','name','Name: ',array('size'=>'100'));
-$form->addElement('text','email_address', 'Email address: ');
-$notesArea = new HTML_QuickForm_textarea('notes','Notes: ');
-$notesArea->setRows(10);
+$form->addElement('text','name','Name: ',array('class'=>'span-20'));
+$form->addElement('text','email_address', 'Email address: ', array('class'=>'span-20'));
+$notesArea = new HTML_QuickForm_textarea('notes', 'Notes: ');
+$notesArea->setAttribute('class','span-20');
+$notesArea->setRows(5);
 $notesArea->setCols(80);
 $form->addElement($notesArea);
 $form->addElement('submit','save', 'Save');
 $page->addBodyContent("<div class='span-24 last'>".$form->toHtml()."</div>");
-
+if ($form->isSubmitted() && $form->validate()) {
+	$db->save('people', $form->getSubmitValues());
+}
 
 /*******************************************************************************
  * List people.
@@ -90,5 +95,3 @@ if (isset($_GET['action']) && $_GET['action']=='print') {
 $page->addBodyContent('</div><!-- end div.container -->');
 $page->display();
 
-
-?>

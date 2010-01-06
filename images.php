@@ -14,24 +14,31 @@ require_once 'common.php';
 
 
 // Output an actual image:
-if ( isset($_GET['id']) && isset($_GET['size']) && ($_GET['size']=='full'||$_GET['size']=='view'||$_GET['size']=='thumb') ) {
-	$filename = DATADIR."/images/".$_GET['size']."/".$_GET['id'].".jpg";
-	if (file_exists($filename)) {
-		$res = $mdb2->query("SELECT * FROM images WHERE id='".$mdb2->escape($_GET['id'])."' LIMIT 1");
-		$image_data = $res->fetchRow();
-		if ( $image_data['auth_level']==0 || $image_data['auth_level']<=$auth->getAuthData('auth_level') ) {
-			$length = filesize($filename);
-			header('Content-type: image/jpeg');
-			header('Content-Length: '.$length);
-			header('Content-Disposition: inline; filename="image-'.basename($filename).'"');
-			readfile($filename);
-			die();
-		} else {
-			die("Access denied.");
-		}
-	} else {
-		die("Image not found.");
-	}
+if ( isset($_GET['id'])
+     && is_numeric($_GET['id'])
+     && isset($_GET['size'])
+     && ( $_GET['size'] == 'full'
+          || $_GET['size'] == 'view'
+          || $_GET['size'] == 'thumb'
+     )
+) {
+    $filename = DATADIR."/images/".$_GET['size']."/".$_GET['id'].".jpg";
+    if (file_exists($filename)) {
+        $image_data = $db->fetchRow("SELECT * FROM images WHERE id='".$db->esc($_GET['id'])."' LIMIT 1");
+        if ( $image_data['auth_level'] == 0
+             || $image_data['auth_level'] <= $auth->getAuthData('auth_level') ) {
+            $length = filesize($filename);
+            header('Content-type: image/jpeg');
+            header('Content-Length: '.$length);
+            header('Content-Disposition: inline; filename="image-'.basename($filename).'"');
+            readfile($filename);
+            die();
+        } else {
+            die("Access denied.");
+        }
+    } else {
+        die("Image not found: $filename");
+    }
 }
 
 
@@ -50,20 +57,18 @@ if ( isset($_GET['id']) && isset($_GET['size']) && ($_GET['size']=='full'||$_GET
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 	$id = $_GET['id'];
-	$res = $mdb2->query("SELECT * FROM images WHERE id='".$mdb2->escape($id)."' LIMIT 1");
-	$image_data = $res->fetchAll();
-	if (count($image_data)==0) die("IMG-$id not found.");
-	$image_data = $image_data[0];
-	$page->setTitle('SAM/IMAGE-'.$image_data['id']);
-	
-	$res = $mdb2->query("SELECT * FROM images WHERE date_and_time<='".$mdb2->escape($image_data['date_and_time'])."' AND id!='".$mdb2->escape($id)."' ORDER BY date_and_time DESC LIMIT 1");
-	$prev = $res->fetchAll();
-	$res = $mdb2->query("SELECT * FROM images WHERE date_and_time>='".$mdb2->escape($image_data['date_and_time'])."' AND id!='".$mdb2->escape($id)."' AND id!='".$mdb2->escape($prev[0]['id'])."' ORDER BY date_and_time ASC LIMIT 1");
-	$next = $res->fetchAll();
+	$image_data = $db->fetchRow("SELECT * FROM images WHERE id='".$db->esc($id)."' LIMIT 1");
+	if (!$image_data) die("Image #$id not found.");
+	$page->setTitle(SITETITLE . ': Image #'.$image_data['id']);
+
+        /*
+	$prev = $db->fetchRow("SELECT * FROM images WHERE date_and_time<='".$db->esc($image_data['date_and_time'])."' AND id!='".$db->escape($id)."' ORDER BY date_and_time DESC LIMIT 1");
+	$next = $db->fetchRow("SELECT * FROM images WHERE date_and_time>='".$db->esc($image_data['date_and_time'])."' AND id!='".$db->escape($id)."' AND id!='".$db->escape($prev[0]['id'])."' ORDER BY date_and_time ASC LIMIT 1");
 	$page->addBodyContent("<p class='centre'>");
-	if (isset($prev[0])) $page->addBodyContent("<a href='/images/".$prev[0]['id']."'>&laquo; Previous</a> | ");
-	if (isset($next[0])) $page->addBodyContent("<a href='/images/".$next[0]['id']."'>Next &raquo;</a>");
+	if ($prev) $page->addBodyContent("<a href='/images/".$prev['id']."'>&laquo; Previous</a> | ");
+	if ($next) $page->addBodyContent("<a href='/images/".$next['id']."'>Next &raquo;</a>");
 	$page->addBodyContent("</p>");
+        */
 	
 	$date_format = (date('H:i',strtotime($image_data['date_and_time']))=='00:00')
 		? "F j<\s\u\p>S</\s\u\p> Y"
@@ -72,8 +77,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 		$css->parseString(".caption {text-align:justify; width:60ex}");
 		$date_timestamp = strtotime($image_data['date_and_time']);
 		$page->addBodyContent("
-		<p><img src='/images/".$image_data['id']."/view' /></p>
-		<p><a href='/".date('Y',$date_timestamp)."-".date('m',$date_timestamp)."'>".date($date_format,$date_timestamp)."</a></p>
+		<p><img src='".WEBROOT."/images/".$image_data['id']."/view' /></p>
+		<p><a href='".WEBROOT."/".date('Y',$date_timestamp)."-".date('m',$date_timestamp)."'>".date($date_format,$date_timestamp)."</a></p>
 		<div class='caption'>".wikiformat($image_data['caption'])."</div>
 		");
 	} else {
@@ -93,7 +98,7 @@ else { // If no ID specified:
 	$num_columns = 8;
 	require_once 'HTML/Table.php';
 	$table = new HTML_Table(array('class'=>'thumbs'));
-	$res = $mdb2->query("SELECT * FROM images WHERE YEAR(date_and_time)=".$mdb2->escape($year)." ORDER BY date_and_time ASC");
+	$res = $db->query("SELECT * FROM images WHERE YEAR(date_and_time)=".$db->escape($year)." ORDER BY date_and_time ASC");
 	$images = $res->fetchAll();
 	$i = 0;
 	for ($row=0; $row<(ceil(count($images)/$num_columns)); $row++) {

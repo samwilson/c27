@@ -1,4 +1,9 @@
+.hide { display:none }
 .centre {text-align:center; margin:auto}
-
+.quiet a { color:inherit }
+.quiet a:hover { color:blue }
 .columnar { list-style-position:inside }
 .columnar li { width:33%; float:left; margin:0}
+
+textarea { height:100px }
+
