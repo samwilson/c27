@@ -39,7 +39,7 @@ define('WEBROOT', 'http://example.org/sub/directory');
 
 // If you want to use your site as a OpenID delegate, enter the server and
 // delegate details here.
-$openid_delegate = "http://example.org/openid/server";
+$openid_server = "http://example.org/openid/server";
 $openid_delegate = "http://example.org/openid/delegate";
 
 // Mail server information.
