@@ -14,6 +14,7 @@ $main_menu = array(
 	'emails.php' => 'Emails',
 	'people.php' => 'People',
 	'journal.php' => 'Journal',
+	'bookkeeping.php' => 'Bookkeeping',
 	'images.php' => 'Images',
 	'feeds.php' => 'Feeds',
 	'tags.php' => 'Tags');

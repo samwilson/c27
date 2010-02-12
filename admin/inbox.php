@@ -30,6 +30,7 @@ if (PEAR::isError($mboxSelect)) {
  ******************************************************************************/
 if (isset($_POST['save'])) {
     $db->save('emails', $_POST);
+    $page->addBodyContent("<p class='notice'>Email saved.</p>");
 }
 if ( (isset($_POST['save']) && $_POST['save']=='Archive + Delete') || isset($_POST['delete']) ) {
 	$imap->deleteMsg($message_id);

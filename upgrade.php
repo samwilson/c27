@@ -106,7 +106,19 @@ CREATE TABLE IF NOT EXISTS feeds (
   url varchar(200) NOT NULL
 ) ENGINE=InnoDB;
 ");
-
+$db->query("
+CREATE TABLE IF NOT EXISTS bookkeeping_journal (
+  id int(10) NOT NULL auto_increment PRIMARY KEY,
+  `date` date NOT NULL,
+  transaction_type enum('payment','receipt') NOT NULL,
+  category varchar(50) NOT NULL,
+  amount decimal(10,2) NOT NULL,
+  private_use_component int(3) NOT NULL,
+  comments varchar(100) NOT NULL,
+  has_receipt_or_invoice int(1) NOT NULL default '0',
+  method varchar(50) NOT NULL
+) ENGINE=InnoDB;
+");
 
 
 
