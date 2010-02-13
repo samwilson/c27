@@ -119,21 +119,23 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 // Year's images:
 else { // If no ID specified:
     $year = (isset($_GET['year'])) ? $_GET['year'] : date('Y');
+    $page->addBodyContent("<h1>Images from $year</h1>");
     $num_columns = 8;
     require_once 'HTML/Table.php';
     $table = new HTML_Table(array('class'=>'thumbs'));
-    $res = $db->query("SELECT * FROM images WHERE YEAR(date_and_time)=".$db->escape($year)." ORDER BY date_and_time ASC");
+    $res = $db->query("SELECT * FROM images WHERE YEAR(date_and_time)=".$db->esc($year)." ORDER BY date_and_time ASC");
     $images = $res->fetchAll();
     $i = 0;
     for ($row=0; $row<(ceil(count($images)/$num_columns)); $row++) {
         $cells = array();
         for ($col=0; $col<=$num_columns; $col++) {
             if (isset($images[$i])) {
-                $cell_contents = "<a href='/images/".$images[$i]['id']."'>";
-                if ( $images[$i]['auth_level']==0 || ($images[$i]['auth_level']>0 && $_SESSION['logged_in']) ) {
-                    $cell_contents .= "<img src='/images/".$images[$i]['id']."/thumb' />";
+                $cell_contents = "<a href='".WEBROOT."/images/".$images[$i]['id']."'>";
+                //if ( $images[$i]['auth_level']==0 || ($images[$i]['auth_level']>0 && $_SESSION['logged_in']) ) {
+			    if ( $images[$i]['auth_level']==0 || $images[$i]['auth_level'] <= $auth->getAuthData('auth_level') ) {
+                    $cell_contents .= "<img src='".WEBROOT."/images/".$images[$i]['id']."/thumb' />";
                 } else {
-                    $cell_contents .= "[IMG-".$images[$i]['id']."]";
+                    $cell_contents .= "[Image #".$images[$i]['id']."]";
                 }
                 $cells[] = $cell_contents."</a>";
             } else {
@@ -147,6 +149,6 @@ else { // If no ID specified:
 
 }
 
-$page->display();
 
-?>
+$page->addBodyContent('</div><!-- end div.container -->');
+$page->display();

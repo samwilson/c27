@@ -421,11 +421,12 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
                 <input type='submit' name='return_to' value='".WEBROOT."/".$this_image['year']."-".$this_image['month']."' />
             </div>
             </form>
+            <table>
 	");
     foreach (exif_read_data(DATADIR.'/images/full/'.$this_image['id'].'.jpg') as $name=>$value) {
         $page->addBodyContent("<tr><th>$name</th><td>$value</td></tr>");
     }
-    $page->addBodyContent("</div>");
+    $page->addBodyContent("</table>");
 
 }
 

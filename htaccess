@@ -9,5 +9,5 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([0-9]{1,4})[\-/]?([0-9]{1,2})?/?$ index.php?year=$1&month=$2 [L,QSA]
 RewriteRule ^images/?$ images.php [QSA]
 RewriteRule ^images/([0-9]+)/?(.*)$ images.php?id=$1&size=$2 [QSA]
-RewriteRule ^images/annus/([0-9]{4}) images.php?year=$1 [QSA]
-
+RewriteRule ^images/annus/([0-9]{4}) images.php?year=$1 [L,QSA]
+RewriteRule ^tags/(.*)$ index.php?tags=$1 [L,QSA]
