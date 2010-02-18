@@ -30,16 +30,16 @@ if (PEAR::isError($mboxSelect)) {
  ******************************************************************************/
 if (isset($_POST['save'])) {
     $db->save('emails', $_POST);
-    $page->addBodyContent("<p class='notice'>Email saved.</p>");
 }
-if ( (isset($_POST['save']) && $_POST['save']=='Archive + Delete') || isset($_POST['delete']) ) {
-	$imap->deleteMsg($message_id);
-	$imap->expunge();
-	header("Location:".$_SERVER['PHP_SELF']);
+if ( (isset($_POST['save']) && $_POST['save']=='Archive + Delete') 
+     || isset($_POST['delete']) ) {
+    $imap->deleteMsg($message_id);
+    $imap->expunge();
+	header("Location:".$_SERVER['SCRIPT_URI']);
 	exit();
 
-} else if (isset($_POST['save']) && $_POST['save']=='Archive Only') {
-	header("Location:".$_SERVER['PHP_SELF']);
+} elseif (isset($_POST['save']) && $_POST['save']=='Archive Only') {
+	header("Location:".$_SERVER['SCRIPT_URI']);
 	exit();
 }
 
@@ -154,7 +154,6 @@ elseif ($msgCount > 0) {
 	$editform = new HTML_QuickForm('editform');
 	$editform->setDefaults($editform_defaults);
 	$editform->addElement('header',null,$imap->numMsg().' Message(s) Remaining');
-	$editform->addElement('hidden','table_name','emails');
 	$editform->addGroup(array(
 		new HTML_QuickForm_submit('save','Archive + Delete'),
 		new HTML_QuickForm_submit('save','Archive Only'),
