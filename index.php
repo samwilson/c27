@@ -176,7 +176,10 @@ foreach ($db->fetchAll($imagesSql) as $i) {
     // Edit link
     $editLink = "<a href='".WEBROOT."/admin/images.php?action=edit_image&amp;id=".$i['id']."&amp;return_to=".urlencode(WEBROOT.'/'.$current_year.'-'.$current_month)."'
 	class='edit-link' title='Edit metadata for image #".$i['id']." (authorisation required).'>
-    Edit</a>";    
+    Edit</a>";
+    // Time
+    $time = date('g:iA',strtotime($i['date_and_time']));
+    $time .= (!empty($i['caption'])) ? ':' : '';
     // Body
     $linkUrl = WEBROOT."/images/".$i['id'];
     $imgUrl = WEBROOT."/images/".$i['id']."/view";
@@ -184,7 +187,7 @@ foreach ($db->fetchAll($imagesSql) as $i) {
   		<img src='$imgUrl' alt='Image.' />
   	</a>
   	<span class='caption'>
-  		".wikiformat("'''".date('g:iA',strtotime($i['date_and_time'])).":''' ".$i['caption']."  $tag_data")." $editLink
+  		".wikiformat("'''$time''' ".$i['caption']."  $tag_data")." $editLink
   	</span>";
 
     

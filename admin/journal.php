@@ -77,7 +77,8 @@ if (isset($_GET['id'])) {
         'date_and_time' => date('Y-m-d H:i:s'),
         'entry_text'    => '',
         'auth_level'    => 10,
-        'title'         => ''
+        'title'         => '',
+        'id'            => 0
     );
     $tag_data = '';
 }
@@ -87,27 +88,25 @@ $entry_date = (isset($_GET['id'])) ? substr($data['date_and_time'],0,7) : date('
 $return_to = (isset($_GET['return_to'])) ? $_GET['return_to'] : WEBROOT."/$entry_date";
 
 $page->addBodyContent("
-<div class='span-12 prepend-6 append-6 last'>
-    <form action='journal.php' method='post'>
+<div>
+    <form action='journal.php' method='post' style='width:50%; margin:auto'>
 
         <p class='hide'>
             $id_input_field
             <input type='hidden' id='return_to' name='return_to' value='$return_to' />
         </p>
 
-        <div class='span-7'>
-            <input class='text span-7' type='text' name='title' value=\"".$data['title']."\" />
-        </div>
-        <div class='span-5 last'>
-            <input class='text span-5' type='text' name='date_and_time' value=\"".$data['date_and_time']."\" />
+        <div style=''>
+            <input type='text' class='text' size='17' style='width:200px; display:block; float:left' name='date_and_time' value=\"".$data['date_and_time']."\" />
+            <input class='text' style='width:300px; display:block;float:right' type='text' id='title' name='title' value=\"".$data['title']."\" />
         </div>
 
         <div class='span-12 last'>
-            <textarea class='text span-12' rows='24' style='height:24em' name='entry_text'>".$data['entry_text']."</textarea>
+            <textarea class='text' rows='24' style='height:300px; width:98%' name='entry_text'>".$data['entry_text']."</textarea>
         </div>
 
         <div class='span-12 last'>
-            <input class='span-12' type='text' name='tags' value=\"$tag_data\" />
+            <input class='span-12' type='text' name='tags' value=\"$tag_data\" style='width:98%' />
         </div>
 
         <div class='span-8'>

@@ -104,21 +104,36 @@ $page->addBodyContent("</ol></div>");
 
 if (isset($_POST['upload_image'])) {
     require_once "HTTP/Upload.php";
-    $uploadTo = DATADIR.'/images/IN/';
-    $upload = new HTTP_Upload("en");
-    $file = $upload->getFiles("image");
+    $uploadTo = DATADIR.'/images/IN';
+    checkDirectory($uploadTo);
+    $upload = new HTTP_Upload('en');
+    $file = $upload->getFiles('image');
     if ($file->isValid()) {
         $moved = $file->moveTo($uploadTo, false);
         if (PEAR::isError($moved)) {
-            $page->addBodyContent("<p class='message error'>Badness happened: ".$moved->getMessage()."</p>");
+            $page->addBodyContent("<p class='message error'>Could not move uploaded file.<br />".$moved->getMessage()."</p>");
+            $page->display();
+	        die();
         }
     } elseif ($file->isError()) {
-        $page->addBodyContent("<p class='message error'>Badness happened: ".$file->errorMsg()."</p>");
-    }
-    $uploadedImageFilename = "$uploadTo/".$file->getProp('name');
-    $id = importImage($uploadedImageFilename);
-    header("Location:?action=edit_image&id=$id");
-    die();
+        $page->addBodyContent("<p class='message error'>File is erroneous.<br />".$file->getMessage()."</p>");
+        $page->display();
+        die();
+    } elseif ($file->isMissing()) {
+        $page->addBodyContent("<p class='message error'>File is missing.<br />".$file->getMessage()."</p>");
+    } else {
+		die(var_dump($file->getProp()));
+		$uploadedImageFilename = "$uploadTo/".$file->getProp('tmp_name');
+		if (!realpath($uploadedImageFilename)) {
+			$page->addBodyContent("<p class='message error'>Can't see $uploadedImageFilename</p>");
+			$page->display();
+			die();
+		}
+		$page->addBodyContent("<p class='notice message'>Uploading $uploadedImageFilename</p>");
+		$id = importImage($uploadedImageFilename);
+		header("Location:?action=edit_image&id=$id");
+		die();
+	}
 }
 
 
@@ -188,32 +203,22 @@ function importImage($fullname) {
     mysql_query("INSERT INTO images SET caption='".$db->esc($title)."', date_and_time='".$db->esc($date)."', auth_level='10'");
     if (mysql_error()) {
         $page->addBodyContent("<p class='error'>Something went wrong with <code>$file</code>: ".mysql_error()."</p>");
+		$page->display();
+		die();
     } else {
         $id = mysql_insert_id();
         $destFilename = DATADIR."/images/full/$id.jpg";
         // Create destination directory if neccessary.
         $destDir = dirname($destFilename);
-        if (!is_dir($destDir)) {
-            if (!@mkdir($destDir, 0755, true)) {
-                $page->addBodyContent(
-                    '<p class="error">Unable to create new directory:<br />'.
-                    '<code>'.$destDir.'</code></p>'
-                );
-                $page->display();
-                die();
-            } else {
-                $page->addBodyContent(
-                    '<p class="success">Created new directory:<br />'.
-                    '<code>'.$destDir.'</code></p>'
-                );
-            }
-        }
-        if (!rename($fullname, $destFilename)) {
+        checkDirectory($destDir);
+        if (!@rename($fullname, $destFilename)) {
             $page->addBodyContent(
-                "<p class='error'>".
+                "<p class='error message'>".
                 "Could not move<br />$fullname<br />to<br />$destFilename".
                 "</p>"
             );
+            $page->display();
+            die();
         }
 
         // make other sizes:
@@ -241,7 +246,14 @@ $pendingCount = 0;
 if (is_dir($inDir)) {
     $pendingCount = count(preg_grep("/^[^\.]/",scandir($inDir)));
 }
-
+if ($pendingCount > 0) {
+	$page->addBodyContent("
+	<p class='message'>
+		$pendingCount images remain to be accessioned.
+		<a href='?process_pending_images'>Process ten.</a>
+		<a href='?process_next_image'>Process one.</a>
+	</p>");
+}
 
 
 
@@ -250,21 +262,10 @@ if (is_dir($inDir)) {
 
 // Upload form:
 $form = new HTML_QuickForm('','post',$_SERVER['PHP_SELF']);
-$file_element = new HTML_QuickForm_file('image','');
+$file_element = new HTML_QuickForm_file('image', null, array('size'=>50));
 $submit_element = new HTML_QuickForm_submit('upload_image','Go!');
-$form->addGroup(array($file_element,$submit_element),'','Upload: ');
-$page->addBodyContent("
-    <div class='span-10'>
-            ".$form->toHtml()."
-    </div>
-    <div class='span-13 last'>
-        <p>
-            $pendingCount images remain to be accessioned.
-            <a href='?process_pending_images'>Process ten.</a>
-            <a href='?process_next_image'>Process one.</a>
-        </p>
-    </div>
-");
+$form->addGroup(array($file_element,$submit_element), '', 'Upload: ');
+$page->addBodyContent($form->toHtml());
 
 
 
@@ -308,7 +309,7 @@ if ( isset($_GET['rotate']) && is_numeric($_GET['rotate']) && isset($_GET['id'])
 
 
 
-if (!empty($_POST)) {
+if (!empty($_POST['save_image'])) {
     $db->save('images', $_POST);
             /*array(
             'id' => $_POST['id'],
@@ -514,4 +515,33 @@ function scaleimage($id, $sizeLabel) {
     if (PEAR::isError($ret)) {
         $page->addBodyContent("Error with saving to ".DATADIR."/images/$sizeLabel/$id.jpg<br />".$ret->getMessage(), 'error');
     }
+}
+
+
+function checkDirectory($dir) {
+	global $page;
+	if (!is_dir($dir)) {
+		if (!@mkdir($dir, 0755, true)) {
+			$page->addBodyContent(
+				'<p class="error message">Unable to create new directory:<br />'.
+				'<code>'.$dir.'</code></p>'
+			);
+			$page->display();
+			die();
+		} else {
+			$page->addBodyContent(
+				'<p class="success message">Created new directory:<br />'.
+				'<code>'.$dir.'</code></p>'
+			);
+		}
+	}
+	if (!is_writable($dir)) {
+		$page->addBodyContent(
+			"<p class='error message'>".
+			"The directory<br /><code>$dir</code><br />is not writable.".
+			"</p>"
+		);
+		$page->display();
+		die();
+	}
 }
