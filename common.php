@@ -16,14 +16,14 @@ $db = new Database($dsn);
 require_once 'HTML/Page2.php';
 $page = new HTML_Page2();
 $page->setDoctype('XHTML 1.0 Strict');
-$page->addStylesheet(WEBROOT.'/lib/blueprint/screen.css', 'text/css', 'screen, projection');
-$page->addStylesheet(WEBROOT.'/lib/blueprint/print.css', 'text/css', 'print');
-$page->addStylesheet(WEBROOT.'/lib/blueprint/plugins/fancy-type/screen.css', 'text/css', 'screen, projection');
-$page->addStylesheet(WEBROOT.'/lib/blueprint/plugins/tabs/screen.css', 'text/css', 'screen, projection');
-$page->addStylesheet(WEBROOT.'/lib/blueprint/plugins/buttons/screen.css', 'text/css', 'screen, projection');
-$page->addRawHeaderData("\t\t".'<!--[if lt IE 8]>'."\n".
-        "\t\t\t".'<link rel="stylesheet" href="'.WEBROOT.'/lib/css/blueprint/ie.css" type="text/css" media="screen, projection">'."\n".
-        "\t\t".'<![endif]-->'."\n");
+//$page->addStylesheet(WEBROOT.'/lib/blueprint/screen.css', 'text/css', 'screen, projection');
+//$page->addStylesheet(WEBROOT.'/lib/blueprint/print.css', 'text/css', 'print');
+//$page->addStylesheet(WEBROOT.'/lib/blueprint/plugins/fancy-type/screen.css', 'text/css', 'screen, projection');
+//$page->addStylesheet(WEBROOT.'/lib/blueprint/plugins/tabs/screen.css', 'text/css', 'screen, projection');
+//$page->addStylesheet(WEBROOT.'/lib/blueprint/plugins/buttons/screen.css', 'text/css', 'screen, projection');
+//$page->addRawHeaderData("\t\t".'<!--[if lt IE 8]>'."\n".
+//        "\t\t\t".'<link rel="stylesheet" href="'.WEBROOT.'/lib/css/blueprint/ie.css" type="text/css" media="screen, projection">'."\n".
+//        "\t\t".'<![endif]-->'."\n");
 $page->addStylesheet(WEBROOT.'/screen.css','text/css','screen');
 $page->setTitle(SITETITLE);
 $page->addHeadLink($openid_server, "openid.server");
@@ -55,14 +55,22 @@ if (isset($_GET['logout'])) {
 if (isset($_GET['login']) || isset($_GET['logout'])) {
     show_login_form();
 }
+$page->addBodyContent('<ul class="menu meta">
+        <li><strong><a href="'.WEBROOT.'" title="Go to homepage">'.SITETITLE.'</a></strong></li>
+		<li><a href="'.WEBROOT.'/admin">Site Administration</a></li>
+');
 if ($auth->checkAuth()) {
     $page->addBodyContent('
-    <ul class="small" style="position:absolute; top:0; right:0; text-align:right">
-        <li><a href="'.WEBROOT.'">'.SITETITLE.'</a></li>
         <li>Logged in as '.$auth->getUsername().'.</li>
         <li><a href="?logout">Logout</a></li>
-    </ul>');
+    ');
 }
+$page->addBodyContent('
+	<li>Thanks to:<br />
+		<a href="http://pear.php.net">PEAR</a> contributors;
+		<a href="http://kingdesk.com/projects/php-typography/">KINGdesk&lsquo;s PHP Typography</a>.
+	</li>
+</ul>');
 
 
 

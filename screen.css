@@ -1,15 +1,45 @@
+a { text-decoration:none; }
+a:hover { text-decoration:underline; }
 .hide { display:none }
 .centre {text-align:center; margin:auto}
 .quiet a { color:inherit }
 .quiet a:hover { color:blue }
 .columnar { list-style-position:inside }
 .columnar li { width:33%; float:left; margin:0}
+.caps { font-weight:normal; }
+strong .caps { font-weight:bolder; }
 
-.day { padding:0.3em }
-.entry { background-color:white; padding:1em }
+.content { width:505px; margin:1em auto 1em 1em; }
+
+h1 { text-align:center; border-color:#dadada; border-style:solid; border-width:1px 0; margin-right:200px; }
+.entry { background-color:white }
+.entry .metadata { text-align:right; font-size:smaller }
+.entry .metadata, .entry .metadata a { color:#aaa; }
+.entry:hover { }
+.entry:hover .metadata, .entry:hover .metadata a { color:black; }
+
+.edit-link { float:right; position:relative; top:-1em; font-size:smaller; color:#ccc }
+
+/* Image entries */
+.entry.image { text-align:center; font-size:smaller; border:1px solid #dadada; padding:2px; margin:auto; }
+.entry.image img { border:0; display:block; margin:auto; }
+.entry.image .caption { margin:0; }
 
 textarea { height:100px }
 code { background-color:#eee; color:darkslategray; font-family: 'Courier New',Courier,monospace }
+
+
+.container {  }
+.menu { position:absolute; border:1px solid #dadada; padding:4px; margin:0; list-style-type:none; background-color:#fefefe }
+.menu .selected { color:black; font-weight:bolder; }
+.menu.navigation.years { top:10px; right:150px; text-align:center; width: 40px; }
+.menu.navigation.months { top:10px; right:10px; width:125px; }
+.menu.thanks { border:1px solid red }
+
+.menu.meta { bottom:10px; right:10px; font-size:smaller; width:125px; }
+
+.menu.random-image { bottom:10px; right:210px; width:250px; text-align:center; }
+
 
 
 
