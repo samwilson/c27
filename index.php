@@ -8,11 +8,9 @@ require_once 'common.php';
 
 
 // Navigation:
-//$page->addBodyContent("<div class='prepend-top span-24 last'>");
-$all_months = array('00'=>'(Unknown)', '01'=>'Jan.','02'=>'Feb.','03'=>'March','04'=>'April','05'=>'May','06'=>'June','07'=>'July','08'=>'Aug.','09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Dec.');
 $current_year = (!empty($_GET['year'])) ? $_GET['year'] : date('Y');
 $current_month = (!empty($_GET['month'])) ? $_GET['month'] : date('m');
-$page->addBodyContent("<h1>".$all_months[$current_month]." $current_year</h1>");
+$page->addBodyContent("<h1>".date('F', strtotime("2010-$current_month-01"))." $current_year</h1>");
 
 // Years
 $page->addBodyContent("<ul class='menu navigation years'>");
@@ -32,6 +30,7 @@ foreach ($years as $y_num=>$y_name) {
 $page->addBodyContent(" </ul>");
 
 // Months
+$all_months = array('00'=>'(Unknown)', '01'=>'Jan.','02'=>'Feb.','03'=>'March','04'=>'April','05'=>'May','06'=>'June','07'=>'July','08'=>'Aug.','09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Dec.');
 $page->addBodyContent("<ul class='menu navigation months'>");
 foreach ($all_months as $m_num=>$m_name) {
     $img_count = $db->fetchOne("SELECT COUNT(*) FROM images WHERE YEAR(date_and_time)=".$db->esc($current_year)." AND MONTH(date_and_time)=".$db->esc($m_num)."");

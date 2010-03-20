@@ -382,7 +382,7 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
     $tag_data = substr($tag_data, 0, -2); // Strip trailing comma-space.
 
     $page->addBodyContent("<hr />
-	<div class='span-11'>
+	<div style='float:left; margin:0 5px 5px 0; font-size:smaller;'>
             <img src='?show_image&size=view&id=".$_GET['id']."' style='max-width:100%' /><br />
             Rotate
             <a href='?rotate=90&id={$_GET['id']}'>90&deg;</a>,
@@ -395,21 +395,14 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
                     <input type='hidden' name='save_image' value='true' />
                     <input type='hidden' name='id' value='".$this_image['id']."' />
             </div>
-
-            <div class='span-3'>
-                    <label for='date_and_time'>Date:</label>
-            </div>
-            <input class='span-10 last' type='text' name='date_and_time' value='".$this_image['date_and_time']."' id='date_and_time' />
-
-            <div class='span-13 last'>
-                    <label for='caption'>Caption:</label>
-            </div>
-            <textarea class='span-13 last' style='height:4em' id='caption' name='caption'>".$this_image['caption']."</textarea>
-
-            <div class='span-3'>
-                    <label for='tags'>Tags:</label>
-            </div>
-            <input type='text' name='tags' value='$tag_data' class='span-10 last'/>
+			<p>
+                <label for='date_and_time'>Date:</label>
+	            <input class='span-10 last' type='text' name='date_and_time' value='".$this_image['date_and_time']."' id='date_and_time' /><br />
+                <label for='caption'>Caption:</label><br />
+	            <textarea class='span-13 last' style='height:4em' id='caption' rows='15' cols='70' name='caption'>".$this_image['caption']."</textarea><br />
+                <label for='tags'>Tags:</label><br />
+                <input type='text' name='tags' value='$tag_data' style='width:40em' />
+			</p>
 
             <div class='span-13 last'>
         ".getAuthLevelRadios($this_image['auth_level'])."
@@ -425,7 +418,7 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
 	");
 	$fullFilePath = DATADIR.'/images/full/'.$this_image['id'].'.jpg';
 	if (file_exists($fullFilePath)) {
-	    foreach (exif_read_data() as $name=>$value) {
+	    foreach (exif_read_data($fullFilePath) as $name=>$value) {
         	$page->addBodyContent("<tr><th>$name</th><td>$value</td></tr>");
     	}
     }
