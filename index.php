@@ -110,7 +110,7 @@ if (isset($_GET['tags'])) {
 // Get journal entries:
 foreach ($db->fetchAll($journalSelectSql) as $e) {
 	// Check auth
-    if ( $e['auth_level'] > $auth->getAuthData('auth_level') ) {
+    if ( $e['auth_level'] != 0 && $e['auth_level'] > $auth->getAuthData('auth_level') ) {
     	continue;
     }
     // Entry text
@@ -159,7 +159,7 @@ foreach ($db->fetchAll($journalSelectSql) as $e) {
 // Get images:
 foreach ($db->fetchAll($imagesSql) as $i) {
 	// Check auth
-    if ( $i['auth_level'] > $auth->getAuthData('auth_level') ) {
+    if ( $i['auth_level'] != 0 && $i['auth_level'] > $auth->getAuthData('auth_level') ) {
     	continue;
     }
     // Tags

@@ -12,7 +12,7 @@ $page->setTitle('Images');
 
 
 
-
+/*
 if ( isset($_GET['show_image'])
      && isset($_GET['id'])
      && is_numeric($_GET['id'])
@@ -25,7 +25,7 @@ if ( isset($_GET['show_image'])
     $filename = DATADIR.'/images/'.$_GET['size'].'/'.$_GET['id'].'.jpg';
     
     // Make a viewable size if there isn't one.
-    if (!file_exists($filename)) {
+    if (!file_readable($filename)) {
         scaleimage($_GET['id'], $_GET['size']);
     }
 
@@ -42,7 +42,7 @@ if ( isset($_GET['show_image'])
     }
 
 }
-
+*/
 
 
 
@@ -365,10 +365,11 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
     $this_image = $db->fetchAll("SELECT id, date_and_time, caption, auth_level, year(date_and_time) as year, month(date_and_time) as month ".
             "FROM images WHERE id='".$db->esc($_GET['id'])."' LIMIT 1");
     $this_image = $this_image[0];
+    /*
     $prev = $db->fetchAll("SELECT * FROM images WHERE date_and_time<='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' ORDER BY date_and_time DESC LIMIT 1");
     $prev_id = (isset($prev[0])) ? $db->esc($prev[0]['id']) : 0;
     $next = $db->fetchAll("SELECT * FROM images WHERE date_and_time>='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' AND id!='$prev_id' ORDER BY date_and_time ASC LIMIT 1");
-    /*$page->addBodyContent("<p class='centre'>");
+    $page->addBodyContent("<p class='centre'>");
 	if (isset($prev[0])) $page->addBodyContent("<a href='".image_edit_url($prev[0]['id'])."'>&laquo; Previous</a> | ");
 	if (isset($next[0])) $page->addBodyContent("<a href='".image_edit_url($next[0]['id'])."'>Next &raquo;</a><br />");
 	$page->addBodyContent("</p>");
@@ -384,7 +385,7 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
 
     $page->addBodyContent("<hr />
 	<div style='float:left; margin:0 5px 5px 0; font-size:smaller;'>
-            <img src='?show_image&size=view&id=".$_GET['id']."' style='max-width:100%' /><br />
+            <img src='".WEBROOT."/images/".$_GET['id']."/view' style='max-width:100%' /><br />
             Rotate
             <a href='?rotate=90&id={$_GET['id']}'>90&deg;</a>,
             <a href='?rotate=180&id={$_GET['id']}'>180&deg;</a>, or
@@ -511,9 +512,13 @@ function scaleimage($id, $sizeLabel) {
     if (PEAR::isError($ret)) {
         $page->addBodyContent("Unable to scale image $original to $size.  ".$ret->getMessage(), 'error');
     }
-    $ret = $transformer->save(DATADIR."/images/$sizeLabel/$id.jpg");
+    $newFilename = DATADIR."/images/$sizeLabel/$id.jpg";
+    $ret = $transformer->save($newFilename);
     if (PEAR::isError($ret)) {
         $page->addBodyContent("Error with saving to ".DATADIR."/images/$sizeLabel/$id.jpg<br />".$ret->getMessage(), 'error');
+    }
+    if (!chmod($newFilename, 0755)) {
+        $page->addBodyContent("<p class='error message'>Unable to change mode of $newFilename to 0755.</p>");
     }
 }
 

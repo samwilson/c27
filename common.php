@@ -52,9 +52,9 @@ $auth->start();
 if (isset($_GET['logout'])) {
     $auth->logout();
 }
-if (isset($_GET['login']) || isset($_GET['logout'])) {
-    show_login_form();
-}
+//if (isset($_GET['login']) || isset($_GET['logout'])) {
+//    show_login_form();
+//}
 $page->addBodyContent('<ul class="menu meta">
         <li><strong><a href="'.WEBROOT.'" title="Go to homepage">'.SITETITLE.'</a></strong></li>
 		<li><a href="'.WEBROOT.'/admin">Site Administration</a></li>
@@ -85,10 +85,9 @@ $page->addBodyContent('
 
 function show_login_form() {
     global $auth, $page;
-    $page->setBody("<div class='container'>
-	<div class='span-6 prepend-9 append-9 last prepend-top'>");
+    $page->setTitle('SAM/LOGIN');
+    $page->addStyleDeclaration('#login-form {margin:10% auto; width:20%;}');
     $page->addBodyContent(login_form($auth->getUsername(), $auth->getStatus(), $auth));
-    $page->addBodyContent("</div>\n</div><!-- end div.container -->");
     $page->display();
     die();
 }
@@ -97,9 +96,6 @@ function show_login_form() {
 
 function login_form($username = null, $status = null, &$auth = null) {
     require_once 'HTML/QuickForm.php';
-    global $page,$css;
-    $page->setTitle('SAM/LOGIN');
-
 
     if ($status==AUTH_EXPIRED) {
         $status = 'Your session has expired. Please login again.';
@@ -107,7 +103,7 @@ function login_form($username = null, $status = null, &$auth = null) {
         $statusatus = 'You have been idle for too long.  Please login again.';
     } elseif ($status==AUTH_WRONG_LOGIN) {
         $status = 'Incorrect username or password.';
-    } else if ($status==AUTH_SECURITY_BREACH) {
+    } elseif ($status==AUTH_SECURITY_BREACH) {
         $status = 'A security problem was detected.  Please login again.';
     } else {
         $status = 'Please log in.';
@@ -117,14 +113,7 @@ function login_form($username = null, $status = null, &$auth = null) {
     $form->addElement('header','',$status);
     $form->addElement('text','username','Username: ',array('id'=>'focus-me'));
     $form->addElement('password','password','Password: ');
-    $form->addElement('submit','login','Login');
-    /*
-	include_once 'Auth/Frontend/Html.php';
-	ob_start();
-	Auth_Frontend_Html::render($auth);
-	$form = ob_get_contents();
-	ob_end_clean();
-    */
+    $form->addElement('submit', 'login', 'Login');
     return $form;
 }
 
