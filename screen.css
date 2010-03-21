@@ -176,7 +176,7 @@ form.inline p {margin-bottom:0;}
 a { text-decoration:none; }
 a:hover { text-decoration:underline; }
 .hide { display:none }
-.centre {text-align:center; margin:auto}
+.centre {text-align:center; margin-left:auto; margin-right:auto}
 .quiet a { color:inherit }
 .quiet a:hover { color:blue }
 .columnar { list-style-type:none }

@@ -184,7 +184,7 @@ if ( isset($_GET['process_pending_images']) ) {
 function importImage($fullname) {
     global $db, $page;
     $title = basename($fullname);
-    $date = '1111-11-11 11:11:11';
+    $date = '0000-00-00 00:00:00';
     if ($exif_date = @exif_read_data($fullname, 'IFD0', 0)) {
         if (isset($exif_date['DateTime'])) {
             $date = $exif_date['DateTime'];
@@ -202,7 +202,7 @@ function importImage($fullname) {
     $title = str_replace('_', ' ', $title);
     mysql_query("INSERT INTO images SET caption='".$db->esc($title)."', date_and_time='".$db->esc($date)."', auth_level='10'");
     if (mysql_error()) {
-        $page->addBodyContent("<p class='error'>Something went wrong with <code>$file</code>: ".mysql_error()."</p>");
+        $page->addBodyContent("<p class='error message'>Something went wrong with <code>$fullname</code>:<br />".mysql_error()."</p>");
 		$page->display();
 		die();
     } else {
@@ -262,7 +262,9 @@ if ($pendingCount > 0) {
 
 // Upload form:
 $form = new HTML_QuickForm('','post',$_SERVER['PHP_SELF']);
+$form->setMaxFileSize(1020 * 1024 * 10);
 $file_element = new HTML_QuickForm_file('image', null, array('size'=>50));
+//$form->addRule('image','Must be uploaded file.','uploadedfile'); 
 $submit_element = new HTML_QuickForm_submit('upload_image','Go!');
 $form->addGroup(array($file_element,$submit_element), '', 'Upload: ');
 $page->addBodyContent($form->toHtml());
@@ -289,14 +291,50 @@ $page->addBodyContent($form->toHtml());
 if ( isset($_GET['rotate']) && is_numeric($_GET['rotate']) && isset($_GET['id']) ) {
     $degrees = $_GET['rotate'];
     $id = $_GET['id'];
-    shell_exec("convert -rotate $degrees ".DATADIR."/images/full/$id.jpg ".DATADIR."/images/full/$id.jpg");
-    shell_exec("convert -rotate $degrees ".DATADIR."/images/view/$id.jpg ".DATADIR."/images/view/$id.jpg");
-    shell_exec("convert -rotate $degrees ".DATADIR."/images/thumb/$id.jpg ".DATADIR."/images/thumb/$id.jpg");
-    header("Location:?action=edit_image&id=$id");
+    $out = shell_exec("convert -rotate $degrees ".DATADIR."/images/full/$id.jpg ".DATADIR."/images/full/$id.jpg");
+    $out .= shell_exec("convert -rotate $degrees ".DATADIR."/images/view/$id.jpg ".DATADIR."/images/view/$id.jpg");
+    $out .= shell_exec("convert -rotate $degrees ".DATADIR."/images/thumb/$id.jpg ".DATADIR."/images/thumb/$id.jpg");
+    if (!empty($out)) {
+    	$page->addBodyContent("<p class='error message'>Output from rotate command:<br />$out</p>");
+    } else {
+	    header("Location:?action=edit_image&id=$id");
+	}
 }
 
 
 
+
+
+
+
+
+// Delete
+if ( isset($_GET['delete']) && is_numeric($_GET['delete']) && !isset($_GET['confirm']) ) {
+	$page->setBody('<div class="error message" style="text-align:center">
+		<p>Are you sure you want to delete image #'.$_GET['delete'].'?!</p>
+		<p><img src="'.WEBROOT.'/images/'.$_GET['delete'].'/view" alt="This is the image." style="display:block; margin:1em auto" /></p>
+		<p>
+			<a href="?delete='.$_GET['delete'].'&confirm">[Yes]</a>&nbsp;
+			<a href="?action=edit_image&id='.$_GET['delete'].'">[No]</a>
+		</p>
+	</p>');
+} elseif ( isset($_GET['delete']) && is_numeric($_GET['delete']) && isset($_GET['confirm']) ) {
+	foreach (array('full','view','thumb') as $size) {
+		$filename = DATADIR."/images/$size/".$_GET['delete'].".jpg";
+		if (file_exists($filename)) {
+			if (!unlink($filename)) {
+				$page->addBodyContent("<p class='error message'>Could not delete $filename.</p>");
+			} else {
+				$page->addBodyContent("<p class='success message'>Deleted $filename.</p>");
+			}
+		} else {
+			$page->addBodyContent("<p class='error message'>$filename does not exist.</p>");
+		}
+	}
+	$db->query('DELETE FROM images WHERE id='.$db->esc($_GET['delete']).' LIMIT 1');
+	//$url = WEBROOT.'/';
+	//$page->addBodyContent("<p class='message'>Return to </p>");
+}
 
 
 
@@ -364,6 +402,11 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
 
     $this_image = $db->fetchAll("SELECT id, date_and_time, caption, auth_level, year(date_and_time) as year, month(date_and_time) as month ".
             "FROM images WHERE id='".$db->esc($_GET['id'])."' LIMIT 1");
+    if (count($this_image)<1) {
+    	$page->addBodyContent("<p class='notice message'>The requested image ID does not exist.</p>");
+    	$page->display();
+    	die();
+    }
     $this_image = $this_image[0];
     /*
     $prev = $db->fetchAll("SELECT * FROM images WHERE date_and_time<='".$db->esc($this_image['date_and_time'])."' AND id!='".$db->esc($_GET['id'])."' ORDER BY date_and_time DESC LIMIT 1");
@@ -390,6 +433,8 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
             <a href='?rotate=90&id={$_GET['id']}'>90&deg;</a>,
             <a href='?rotate=180&id={$_GET['id']}'>180&deg;</a>, or
             <a href='?rotate=270&id={$_GET['id']}'>270&deg;</a> clockwise.
+            &nbsp;
+            <a href='?delete={$_GET['id']}'>Delete</a>.
 	</div>
 	<div class='span-13 last'>
             <form action='images.php?action=edit_image&id=".$this_image['id']."' method='post'>
@@ -416,7 +461,8 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
                 <input type='submit' name='return_to' value='".WEBROOT."/".$this_image['year']."-".$this_image['month']."' />
             </div>
             </form>
-            <table>
+            <hr style='clear:both'/>
+            <table class='small quiet'>
 	");
 	$fullFilePath = DATADIR.'/images/full/'.$this_image['id'].'.jpg';
 	if (file_exists($fullFilePath)) {
