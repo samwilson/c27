@@ -56,11 +56,14 @@ $page->addBodyContent(" </ul>");
 
 if (isset($_GET['tags'])) {
 	$tagList = '';
+	$tagLabel = '';
     foreach (array_map('trim', explode(',',$_GET['tags'])) as $t) {
-    	$tagList .= "'$t', ";
+    	$tagList .= "'".$db->esc($t)."', ";
+    	$tagLabel .= "$t, ";
     }
     $tagList = substr($tagList,0,-2);
-	$page->addBodyContent("<div class='success span-24 last'>You are currently viewing all journal entries and images tagged as <strong>$tagList</strong>.</div>");
+    $tagLabel = substr($tagLabel,0,-2);
+	$page->addBodyContent("<div class='success message content'>You are currently viewing all journal entries and images tagged <strong>$tagLabel</strong>.</div>");
 }
 
 
@@ -113,8 +116,13 @@ foreach ($db->fetchAll($journalSelectSql) as $e) {
     if ( $e['auth_level'] != 0 && $e['auth_level'] > $auth->getAuthData('auth_level') ) {
     	continue;
     }
+	// Title
+	$title =  (!empty($e['title'])) ? ', '.$e['title'] : '';
+    $title = "<a name='entry-".$e['id']."' href='#entry-".$e['id']."' title='permalink'>
+			".date('g:iA',strtotime($e['date_and_time']))."$title</a>";
     // Entry text
 	$entryText = "'''".date('g:iA',strtotime($e['date_and_time'])).".''' ".$e['entry_text'];
+	$entryText = "'''".$title.":''' ".$e['entry_text'];
 	// Tags
     $tag_data = '';
     $tags = $db->fetchAll("SELECT id, title FROM tags JOIN tags_to_journal_entries
@@ -131,15 +139,11 @@ foreach ($db->fetchAll($journalSelectSql) as $e) {
         title='Edit entry #".$e['id']." (authorisation required).'>
             Edit
         </a>";
-	// Title
-	$title =  (!empty($e['title'])) ? ', '.$e['title'] : '';
-    $title = "<a name='entry-".$e['id']."' href='#entry-".$e['id']."' title='permalink'>
-			".date('g:iA',strtotime($e['date_and_time']))."$title</a>";
 
     
     $entry = array(
     	'tags'          => $tag_data,
-		'body'          => wikiformat($entryText)." $editLink",
+		'body'          => wikiformat($entryText),
 		'auth_level'    => $e['auth_level'],
     	'edit'          => $editLink,
     	'class'         => 'journal',
@@ -171,7 +175,7 @@ foreach ($db->fetchAll($imagesSql) as $i) {
         $tag_data .= '<a href="'.WEBROOT.'/tags/'.$tag['title'].'">'.$tag['title']."</a>, ";
     }
     if (!empty($tag_data)) {
-	    $tag_data = 'Tags: '.substr($tag_data, 0, -2).'.'; // Strip trailing comma-space etc.
+	    $tag_data = substr($tag_data, 0, -2).'.'; // Strip trailing comma-space etc.
 	}
     // Edit link
     $editLink = "<a href='".WEBROOT."/admin/images.php?action=edit_image&amp;id=".$i['id']."&amp;return_to=".urlencode(WEBROOT.'/'.$current_year.'-'.$current_month)."'
@@ -183,11 +187,11 @@ foreach ($db->fetchAll($imagesSql) as $i) {
     // Body
     $linkUrl = WEBROOT."/images/".$i['id'];
     $imgUrl = WEBROOT."/images/".$i['id']."/view";
-    $body = "<a href='$linkUrl' title='Click for larger view.'>
+    $body = "<a href='$linkUrl' name='image-".$i['id']."' title='Click for larger view.'>
   		<img src='$imgUrl' alt='Image.' />
   	</a>
   	<span class='caption'>
-  		".wikiformat("'''$time''' ".$i['caption']."  $tag_data")." $editLink
+  		".wikiformat("'''$time''' ".$i['caption'])."
   	</span>";
 
     
@@ -228,8 +232,13 @@ foreach ($entries as $key=>$entry) {
         $day = $new_day;
         $page->addBodyContent("<h2 class=''>$day</h2>");
     }
-    $page->addBodyContent("
-	<div class='entry {$entry['class']}'>{$entry['body']}</div>");
+    $keywords = (!empty($entry['tags'])) ? 'Tags: '.$entry['tags'].' &nbsp; &nbsp; ' : '';
+    $page->addBodyContent(
+    	"<div class='entry {$entry['class']}'>
+    		{$entry['body']}
+    		<p class='metadata'>$keywords ".$entry['edit']."</p>
+		</div>"
+	);
 }
 //$page->addBodyContent("</div><!-- .day -->"); 
 $page->addBodyContent("</div>"); 
@@ -245,16 +254,18 @@ $page->addBodyContent("</div>");
 
 // Get a random image.
 $or_where = ($auth->checkAuth()) ? "OR auth_level<=".$db->esc($auth->getAuthData('auth_level')) : "";
-$image = $db->fetchRow("SELECT * FROM images WHERE auth_level=0 $or_where ORDER BY RAND() LIMIT 1");
+$image = $db->fetchRow(
+	"SELECT id, YEAR(date_and_time) AS year, MONTH(date_and_time) AS month, caption
+	FROM images WHERE auth_level=0 $or_where ORDER BY RAND() LIMIT 1"
+);
 $page->addBodyContent("
 <div class='menu random-image entry image'>
-	<h3>A Random Image</h3>
-		<a href='".WEBROOT."/images/{$image['id']}'>
+		<a href='".WEBROOT."/{$image['year']}-{$image['month']}#image-{$image['id']}'>
 			<img src='".WEBROOT."/images/{$image['id']}/thumb' />
-		</a>
 	<span class='caption'>
-		".wikiformat($image['caption'])."
+		".wikiformat("'''A randomly-selected image:''' ".$image['caption'])."
 	</span>
+		</a>
 </div>
 ");
 

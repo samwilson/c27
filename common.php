@@ -85,7 +85,7 @@ $page->addBodyContent('
 
 function show_login_form() {
     global $auth, $page;
-    $page->setTitle('SAM/LOGIN');
+    $page->setTitle('Please Log In');
     $page->addStyleDeclaration('#login-form {margin:10% auto; width:20%;}');
     $page->addBodyContent(login_form($auth->getUsername(), $auth->getStatus(), $auth));
     $page->display();

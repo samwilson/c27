@@ -184,21 +184,22 @@ a:hover { text-decoration:underline; }
 .caps { font-weight:normal; }
 strong .caps { font-weight:bolder; }
 
-.content { width:505px; margin:1em auto 1em 1em; border:1px solid #dadada; padding: 1em; }
+.content { width:505px; margin:1em auto 1em 2.5em; }
 
 h1 { text-align:center; border-color:#dadada; border-style:solid; border-width:1px 1px 1px 0; margin-right:210px; margin-top:10px; }
-.entry { background-color:white }
-.entry .metadata { text-align:right; font-size:smaller }
-.entry .metadata, .entry .metadata a { color:#aaa; }
-.entry:hover { }
-
-.edit-link { float:right; position:relative; top:-1em; font-size:smaller; color:#ccc }
-.entry:hover .edit-link { color:blue; }
+.entry { background-color:white; margin-bottom:0.2em }
+.entry .metadata { font-size:smaller; margin:0 }
+.entry .metadata a { color:black }
+.entry .metadata a.edit-link { color:#ccc }
+.entry:hover .metadata {  }
+.entry:hover .metadata a { color:blue; }
+.entry:hover .metadata a.edit-link { color:#ccc }
 
 /* Image entries */
 .entry.image { text-align:center; font-size:smaller; border:1px solid #dadada; padding:2px; margin:5px auto; }
 .entry.image img { border:0; display:block; margin:auto; }
 .entry.image .caption { margin:0; }
+.entry.image p { display:inline }
 
 textarea { height:100px }
 code { background-color:#eee; color:darkslategray; font-family: 'Courier New',Courier,monospace }

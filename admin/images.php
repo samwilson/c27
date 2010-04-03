@@ -426,8 +426,8 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
     }
     $tag_data = substr($tag_data, 0, -2); // Strip trailing comma-space.
 
-    $page->addBodyContent("<hr />
-	<div style='float:left; margin:0 5px 5px 0; font-size:smaller;'>
+    $page->addBodyContent("
+	<div style='float:left; margin:0 5px 5px 10px; font-size:smaller;'>
             <img src='".WEBROOT."/images/".$_GET['id']."/view' style='max-width:100%' /><br />
             Rotate
             <a href='?rotate=90&id={$_GET['id']}'>90&deg;</a>,
@@ -461,8 +461,8 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
                 <input type='submit' name='return_to' value='".WEBROOT."/".$this_image['year']."-".$this_image['month']."' />
             </div>
             </form>
-            <hr style='clear:both'/>
-            <table class='small quiet'>
+            <table class='small quiet' style='margin:4em auto; width:20%; border:1px solid #dadada; clear:both'>
+            <caption>Exif Data</caption>
 	");
 	$fullFilePath = DATADIR.'/images/full/'.$this_image['id'].'.jpg';
 	if (file_exists($fullFilePath)) {

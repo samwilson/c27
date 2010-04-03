@@ -117,6 +117,9 @@ $page->addBodyContent("
         </div>
         <div class='span-12 last prepend-top'>
             ".wikiformat_doco()."
+            <ul>
+            <li>No trailing punctuation on title; a colon will be added.</li>
+            </ul>
         </div>
     </form>
 </div>
