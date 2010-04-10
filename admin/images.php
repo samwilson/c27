@@ -12,37 +12,22 @@ $page->setTitle('Images');
 
 
 
-/*
-if ( isset($_GET['show_image'])
-     && isset($_GET['id'])
-     && is_numeric($_GET['id'])
-     && isset($_GET['size'])
-     && ( $_GET['size'] == 'full'
-          || $_GET['size'] == 'view'
-          || $_GET['size'] == 'thumb'
-        )
-) {
-    $filename = DATADIR.'/images/'.$_GET['size'].'/'.$_GET['id'].'.jpg';
-    
-    // Make a viewable size if there isn't one.
-    if (!file_readable($filename)) {
-        scaleimage($_GET['id'], $_GET['size']);
-    }
 
-    // Display the image.
-    if (file_exists($filename)) {
-        $length = filesize($filename);
-        header('Content-type: image/jpeg');
-        header('Content-Length: '.$length);
-        header('Content-Disposition: inline; filename="'.basename($filename).'"');
-        readfile($filename);
-        die();
-    } else {
-        $page->addBodyContent("<p class='error'>File Not Found: $filename</p>");
-    }
 
+
+
+
+// Check that thumb and view sizes exist
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+	foreach (array('thumb','view') as $size) {
+		$filename = DATADIR.'/images/'.$size.'/'.$_GET['id'].'.jpg';
+		if (!file_exists($filename)) {
+			scaleimage($_GET['id'], $size);
+		}
+	}
 }
-*/
+
+
 
 
 
