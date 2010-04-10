@@ -324,7 +324,6 @@ class Database {
             $sql .= " WHERE id='".$this->esc($data['id'])."'";
         }
         if ($result = $this->query($sql)) {
-            $page->addBodyContent("<div class='span-24 last success'>Record saved.</div>");
             if (!empty($_REQUEST['return_to'])) {
                 header('Location:'.$_REQUEST['return_to']);
             }

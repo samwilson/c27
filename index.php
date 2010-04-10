@@ -1,5 +1,29 @@
 <?php
 require_once 'common.php';
+$current_year  = (isset($_GET['year']) && $_GET['year']  != '') ? $_GET['year']  : date('Y');
+$current_month = (isset($_GET['month']) && $_GET['month'] != '') ? $_GET['month'] : date('m');
+
+
+
+
+
+
+// Title
+$exactDate = false;
+if ($current_year > 0 && $current_month > 0) {
+	$title = date('F', strtotime("2010-$current_month-01")).' '.$current_year;
+	$exactDate = true;
+} elseif ($current_year > 0 && $current_month == '00') {
+	$title = $current_year.' (Month Unknown)';
+} elseif ($current_year == '0000' && $current_month == '00') {
+	$title = 'Year and Month Unknown';
+} elseif ($current_year == '0000' && $current_month > 0) {
+	$title = date('F', strtotime("2010-$current_month-01")).' (Year Unknown)';
+}
+$page->setTitle($title.' :: '.SITETITLE);
+$page->addBodyContent("<h1>$title</h1>");
+
+
 
 
 
@@ -8,29 +32,29 @@ require_once 'common.php';
 
 
 // Navigation:
-$current_year = (!empty($_GET['year'])) ? $_GET['year'] : date('Y');
-$current_month = (!empty($_GET['month'])) ? $_GET['month'] : date('m');
-$page->addBodyContent("<h1>".date('F', strtotime("2010-$current_month-01"))." $current_year</h1>");
-
 // Years
 $page->addBodyContent("<ul class='menu navigation years'>");
 foreach ($db->fetchAll("SELECT YEAR(date_and_time) AS year FROM images GROUP BY YEAR(date_and_time)") as $year) {
+	//$year['year'] = ($year['year'] == '0') ? '0000' : $year['year'];
     $years[$year['year']] = $year['year'];
 }
 foreach ($db->fetchAll("SELECT YEAR(date_and_time) AS year FROM journal_entries GROUP BY YEAR(date_and_time)") as $year) {
+	$year['year'] = ($year['year'] == '0') ? '0000' : $year['year'];
     $years[$year['year']] = $year['year'];
 }
-$years[0] = '????';
+$naText = '(<abbr title="Not Available">N/A</abbr>)';
 $years = array_unique($years);
 asort($years);
 foreach ($years as $y_num=>$y_name) {
-    $selected = ($y_name == $current_year) ? $selected = " class='selected'" : '';
+	$y_name = ($y_num==0) ? $naText : $y_name;
+	$y_num = ($y_num==0) ? '0000' : $y_num;
+    $selected = ($y_num == $current_year) ? $selected = " class='selected'" : '';
     $page->addBodyContent("<li><a$selected href='".WEBROOT."/$y_num'>$y_name</a></li>");
 }
 $page->addBodyContent(" </ul>");
 
 // Months
-$all_months = array('00'=>'(Unknown)', '01'=>'Jan.','02'=>'Feb.','03'=>'March','04'=>'April','05'=>'May','06'=>'June','07'=>'July','08'=>'Aug.','09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Dec.');
+$all_months = array('00'=>$naText, '01'=>'Jan.','02'=>'Feb.','03'=>'March','04'=>'April','05'=>'May','06'=>'June','07'=>'July','08'=>'Aug.','09'=>'Sept.','10'=>'Oct.','11'=>'Nov.','12'=>'Dec.');
 $page->addBodyContent("<ul class='menu navigation months'>");
 foreach ($all_months as $m_num=>$m_name) {
     $img_count = $db->fetchOne("SELECT COUNT(*) FROM images WHERE YEAR(date_and_time)=".$db->esc($current_year)." AND MONTH(date_and_time)=".$db->esc($m_num)."");
@@ -57,13 +81,20 @@ $page->addBodyContent(" </ul>");
 if (isset($_GET['tags'])) {
 	$tagList = '';
 	$tagLabel = '';
-    foreach (array_map('trim', explode(',',$_GET['tags'])) as $t) {
+	$tags = array_map('trim', explode(',',$_GET['tags']));
+    foreach ($tags as $t) {
     	$tagList .= "'".$db->esc($t)."', ";
-    	$tagLabel .= "$t, ";
+    	$tagLabel .= "<li>$t</li>";
     }
     $tagList = substr($tagList,0,-2);
     $tagLabel = substr($tagLabel,0,-2);
-	$page->addBodyContent("<div class='success message content'>You are currently viewing all journal entries and images tagged <strong>$tagLabel</strong>.</div>");
+	$tagLabelPrefix = (count($tags) > 1) ? ' with any of the following' : '';
+	$page->addBodyContent(
+		"<div class='success message content'>
+		You are currently viewing all journal entries and images tagged$tagLabelPrefix:
+		<ul>$tagLabel</ul>
+		</div>"
+	);
 }
 
 
@@ -118,7 +149,7 @@ foreach ($db->fetchAll($journalSelectSql) as $e) {
     }
 	// Title
 	$title =  (!empty($e['title'])) ? ', '.$e['title'] : '';
-    $title = "<a name='entry-".$e['id']."' href='#entry-".$e['id']."' title='permalink'>
+    $title = "<a name='entry-".$e['id']."' href='#entry-".$e['id']."'>
 			".date('g:iA',strtotime($e['date_and_time']))."$title</a>";
     // Entry text
 	$entryText = "'''".date('g:iA',strtotime($e['date_and_time'])).".''' ".$e['entry_text'];
@@ -178,17 +209,20 @@ foreach ($db->fetchAll($imagesSql) as $i) {
 	    $tag_data = substr($tag_data, 0, -2).'.'; // Strip trailing comma-space etc.
 	}
     // Edit link
-    $editLink = "<a href='".WEBROOT."/admin/images.php?action=edit_image&amp;id=".$i['id']."&amp;return_to=".urlencode(WEBROOT.'/'.$current_year.'-'.$current_month)."'
+    $returnTo = urlencode(WEBROOT.'/'.$current_year.'-'.$current_month.'#image-'.$i['id']);
+    $editLink = "<a href='".WEBROOT."/admin/images.php?action=edit_image&amp;id=".$i['id']."&amp;return_to=$returnTo'
 	class='edit-link' title='Edit metadata for image #".$i['id']." (authorisation required).'>
-    Edit</a>";
+    Edit</a> <a href='".WEBROOT."/admin/images.php?delete=".$i['id']."&amp;return_to=$returnTo'
+    class='edit-link' title='Delete this image (authorisation required)'>
+    Delete</a>";
     // Time
-    $time = date('g:iA',strtotime($i['date_and_time']));
+    $time = '<a href="'.urldecode($returnTo).'">'.date('g:iA',strtotime($i['date_and_time'])).'</a>';
     $time .= (!empty($i['caption'])) ? ':' : '';
     // Body
     $linkUrl = WEBROOT."/images/".$i['id'];
     $imgUrl = WEBROOT."/images/".$i['id']."/view";
     $body = "<a href='$linkUrl' name='image-".$i['id']."' title='Click for larger view.'>
-  		<img src='$imgUrl' alt='Image.' />
+  		<img src='$imgUrl' alt='Please see caption, below.' />
   	</a>
   	<span class='caption'>
   		".wikiformat("'''$time''' ".$i['caption'])."
@@ -220,15 +254,12 @@ foreach ($db->fetchAll($imagesSql) as $i) {
 ksort($entries);
 $page->addBodyContent("<div class='content'>");
 if (count($entries) < 1) {
-    $page->addBodyContent("<p class='notice'>No journal entries nor images were found.</p>");
+    $page->addBodyContent("<p class='notice message'>No journal entries or images were found for the requested time period.</p>");
 }
 $day = '';
 foreach ($entries as $key=>$entry) {
     $new_day = date('l, F j<\s\u\p>S</\s\u\p> Y', strtotime($entry['date_and_time']));
-    if ($day != $new_day) {
-        //if (!empty($day)) {
-        //    $page->addBodyContent("</div><!-- .day -->"); // If we're already in a day, i.e. not at the begining of the month.
-        //}
+    if ($day != $new_day && $exactDate) {
         $day = $new_day;
         $page->addBodyContent("<h2 class=''>$day</h2>");
     }

@@ -263,10 +263,10 @@ if ($pendingCount > 0) {
 // Upload form:
 $form = new HTML_QuickForm('','post',$_SERVER['PHP_SELF']);
 $form->setMaxFileSize(1020 * 1024 * 10);
-$file_element = new HTML_QuickForm_file('image', null, array('size'=>50));
-//$form->addRule('image','Must be uploaded file.','uploadedfile'); 
-$submit_element = new HTML_QuickForm_submit('upload_image','Go!');
-$form->addGroup(array($file_element,$submit_element), '', 'Upload: ');
+$file_element = new HTML_QuickForm_file('image', null, array('size'=>80));
+$submit_element = new HTML_QuickForm_submit('upload_image','Upload');
+$uploadLabel = 'Upload (maximum '.ini_get('upload_max_filesize').'): ';
+$form->addGroup(array($file_element,$submit_element), null, $uploadLabel);
 $page->addBodyContent($form->toHtml());
 
 
@@ -308,34 +308,49 @@ if ( isset($_GET['rotate']) && is_numeric($_GET['rotate']) && isset($_GET['id'])
 
 
 
+
+
+
+
 // Delete
-if ( isset($_GET['delete']) && is_numeric($_GET['delete']) && !isset($_GET['confirm']) ) {
-	$page->setBody('<div class="error message" style="text-align:center">
-		<p>Are you sure you want to delete image #'.$_GET['delete'].'?!</p>
-		<p><img src="'.WEBROOT.'/images/'.$_GET['delete'].'/view" alt="This is the image." style="display:block; margin:1em auto" /></p>
-		<p>
-			<a href="?delete='.$_GET['delete'].'&confirm">[Yes]</a>&nbsp;
-			<a href="?action=edit_image&id='.$_GET['delete'].'">[No]</a>
-		</p>
-	</p>');
-} elseif ( isset($_GET['delete']) && is_numeric($_GET['delete']) && isset($_GET['confirm']) ) {
-	foreach (array('full','view','thumb') as $size) {
-		$filename = DATADIR."/images/$size/".$_GET['delete'].".jpg";
-		if (file_exists($filename)) {
-			if (!unlink($filename)) {
-				$page->addBodyContent("<p class='error message'>Could not delete $filename.</p>");
+if ( isset($_GET['delete']) && is_numeric($_GET['delete'])) {
+	$returnTo = (isset($_GET['return_to']))
+		? $_GET['return_to']
+		: '?action=edit_image&id='.$_GET['delete'];
+
+	// Seek confirmation
+	if (!isset($_GET['confirm']) ) {
+		$page->setBody('<div class="error message" style="text-align:center">
+			<p>Are you sure you want to delete image #'.$_GET['delete'].'?!</p>
+			<p><img src="'.WEBROOT.'/images/'.$_GET['delete'].'/view" alt="This is the image." style="display:block; margin:1em auto" /></p>
+			<p>
+				<a href="?delete='.$_GET['delete'].'&confirm&return_to='.$returnTo.'">[Yes]</a>&nbsp;
+				<a href="'.$returnTo.'">[No]</a>
+			</p>
+		</p>');
+		
+	// Delete images and DB record.
+	} elseif (isset($_GET['confirm']) ) {
+		foreach (array('full','view','thumb') as $size) {
+			$filename = DATADIR."/images/$size/".$_GET['delete'].".jpg";
+			if (file_exists($filename)) {
+				if (!unlink($filename)) {
+					$page->addBodyContent("<p class='error message'>Could not delete $filename.</p>");
+				} else {
+					$page->addBodyContent("<p class='success message'>Deleted $filename.</p>");
+				}
 			} else {
-				$page->addBodyContent("<p class='success message'>Deleted $filename.</p>");
+				$page->addBodyContent("<p class='error message'>$filename does not exist.</p>");
 			}
-		} else {
-			$page->addBodyContent("<p class='error message'>$filename does not exist.</p>");
+		}
+		$db->query('DELETE FROM images WHERE id='.$db->esc($_GET['delete']).' LIMIT 1');
+		if (!empty($returnTo)) {
+			header('Location:'.urldecode($returnTo));
+			exit();
 		}
 	}
-	$db->query('DELETE FROM images WHERE id='.$db->esc($_GET['delete']).' LIMIT 1');
-	//$url = WEBROOT.'/';
-	//$page->addBodyContent("<p class='message'>Return to </p>");
+	
 }
-
 
 
 
@@ -349,12 +364,6 @@ if ( isset($_GET['delete']) && is_numeric($_GET['delete']) && !isset($_GET['conf
 
 if (!empty($_POST['save_image'])) {
     $db->save('images', $_POST);
-            /*array(
-            'id' => $_POST['id'],
-            'date_and_time' => $_POST['date_and_time'],
-            'caption' => $_POST['caption'],
-            'auth_level' => $_POST['auth_level']*/
-    //));
 
     // Save tags
     $db->query("DELETE FROM tags_to_images WHERE image=".$db->esc($_POST['id']));
@@ -372,7 +381,8 @@ if (!empty($_POST['save_image'])) {
             $db->save('tags_to_images', array('tag'=>$tag_id,'image'=>$_POST['id']));
         }
     }
-
+    
+	$page->addBodyContent("<p class='success message'>Image data saved.</p>");
 
 }
 
@@ -426,7 +436,7 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
     }
     $tag_data = substr($tag_data, 0, -2); // Strip trailing comma-space.
 
-    $page->addBodyContent("
+    $page->addBodyContent("<div>
 	<div style='float:left; margin:0 5px 5px 10px; font-size:smaller;'>
             <img src='".WEBROOT."/images/".$_GET['id']."/view' style='max-width:100%' /><br />
             Rotate
@@ -436,7 +446,7 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
             &nbsp;
             <a href='?delete={$_GET['id']}'>Delete</a>.
 	</div>
-	<div class='span-13 last'>
+	<div style=''>
             <form action='images.php?action=edit_image&id=".$this_image['id']."' method='post'>
             <div class='hide'>
                     <input type='hidden' name='save_image' value='true' />
@@ -450,27 +460,27 @@ if (isset($_GET['action']) && $_GET['action']=='edit_image' && isset($_GET['id']
                 <label for='tags'>Tags:</label><br />
                 <input type='text' name='tags' value='$tag_data' style='width:40em' />
 			</p>
-
-            <div class='span-13 last'>
-        ".getAuthLevelRadios($this_image['auth_level'])."
-            </div>
-
-            <div class='span-13 last'>
-                <input type='submit' name='save_image' value='Save' /> or save and return to
+            <p>".getAuthLevelRadios($this_image['auth_level'])."</p>
+            <p>
+                <input type='submit' name='save_image' value='Save' /> or save and <strong>return to</strong>
                 <input type='submit' name='return_to' value='?process_next_image' />
                 <input type='submit' name='return_to' value='".WEBROOT."/".$this_image['year']."-".$this_image['month']."' />
-            </div>
+            </p>
             </form>
             <table class='small quiet' style='margin:4em auto; width:20%; border:1px solid #dadada; clear:both'>
             <caption>Exif Data</caption>
 	");
 	$fullFilePath = DATADIR.'/images/full/'.$this_image['id'].'.jpg';
 	if (file_exists($fullFilePath)) {
-	    foreach (exif_read_data($fullFilePath) as $name=>$value) {
-        	$page->addBodyContent("<tr><th>$name</th><td>$value</td></tr>");
-    	}
+		if ($exifData = @exif_read_data($fullFilePath)) {
+			foreach ($exifData as $name=>$value) {
+				$page->addBodyContent("<tr><th>$name</th><td>$value</td></tr>");
+			}
+		} else {
+			$page->addBodyContent("<tr><th>Error:</th><td>Could not read EXIF data.</td></tr>");
+		}
     }
-    $page->addBodyContent("</table>");
+    $page->addBodyContent("</table></div>");
 
 }
 
